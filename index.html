@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Daily Page — Franklin's Day Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --desk: #2b211a;
+  --desk-dark: #17110d;
+  --paper: #e9dcbd;
+  --paper2: #dfce9f;
+  --ink: #1d1812;
+  --faint: #7a6648;
+  --faint-line: rgba(122, 102, 72, 0.35);
+  --seal: #8c2b22;
+  --seal-soft: rgba(140, 43, 34, 0.12);
+  --pen-ink: #1f2a4a;
+  --now: rgba(140, 43, 34, 0.13);
+  --drop-target: rgba(140, 43, 34, 0.16);
+  --card-bg: rgba(246, 237, 214, 0.72);
+  box-sizing: border-box;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--desk);
+  color: var(--ink);
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 19px;
+  line-height: 1.45;
+  padding: 24px 14px 60px;
+}
+
+/* Aged Parchment Page with Historical Aging & Vignetting */
+.page {
+  max-width: 1060px;
+  margin: 0 auto;
+  background:
+    radial-gradient(ellipse at 12% 7%, rgba(160, 115, 45, 0.24), transparent 45%),
+    radial-gradient(ellipse at 92% 65%, rgba(130, 85, 30, 0.22), transparent 50%),
+    radial-gradient(ellipse at 45% 95%, rgba(100, 65, 20, 0.32), transparent 45%),
+    radial-gradient(ellipse at 75% 15%, rgba(170, 125, 55, 0.15), transparent 40%),
+    var(--paper);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65), inset 0 0 85px rgba(85, 55, 18, 0.38);
+  padding: 34px 32px 44px;
+  border-radius: 4px;
+  position: relative;
+  border: 1px solid rgba(100, 70, 25, 0.3);
+}
+
+.page::after {
+  content: "";
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid rgba(122, 102, 72, 0.25);
+  pointer-events: none;
+}
+
+.hand {
+  font-family: "Caveat", "Segoe Script", cursive;
+  font-size: 25px;
+  color: var(--pen-ink);
+  font-weight: 500;
+}
+
+h1, h2, h3, .q {
+  font-family: "IM Fell English", "EB Garamond", Georgia, serif;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Header */
+.head {
+  text-align: center;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.head-ornament {
+  font-size: 18px;
+  letter-spacing: 6px;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.head h1 {
+  font-size: 34px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.head .subtitle {
+  margin: 6px 0 0;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--faint);
+}
+.head .saying {
+  margin: 8px 0 0;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 19px;
+  color: var(--ink);
+  border-top: 1px dashed var(--faint-line);
+  padding-top: 8px;
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Setup View */
+.setup {
+  max-width: 660px;
+  margin: 10px auto;
+  text-align: center;
+}
+.setup .q {
+  font-size: 26px;
+  margin: 24px 0 12px;
+}
+.setup-helper {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--faint);
+  margin-top: -6px;
+  margin-bottom: 12px;
+}
+.closed-banner {
+  border: 2px solid var(--seal);
+  color: var(--seal);
+  display: inline-block;
+  padding: 4px 18px;
+  transform: rotate(-2deg);
+  margin-bottom: 18px;
+  font-family: "IM Fell English", serif;
+  font-size: 20px;
+  box-shadow: 2px 2px 0 rgba(140, 43, 34, 0.15);
+}
+
+.strip-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border: 2px solid var(--ink);
+  width: fit-content;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.15);
+}
+.strip button {
+  font: italic 23px "EB Garamond", serif;
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--ink);
+  color: var(--ink);
+  width: 58px;
+  height: 56px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+  position: relative;
+}
+.strip button:last-child {
+  border-right: 0;
+}
+.strip small {
+  display: block;
+  font-size: 11px;
+  font-style: normal;
+  color: var(--faint);
+  margin-top: 2px;
+}
+.strip button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.strip button[aria-pressed="true"] small {
+  color: var(--paper2);
+}
+
+.morning-input-wrap {
+  margin: 20px auto;
+  max-width: 520px;
+  text-align: left;
+}
+.morning-input-wrap label {
+  display: block;
+  font-family: "IM Fell English", serif;
+  font-size: 22px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.stamp-btn {
+  margin-top: 24px;
+  font: 23px "IM Fell English", serif;
+  color: var(--seal);
+  background: rgba(246, 237, 214, 0.45);
+  border: 3px double var(--seal);
+  padding: 10px 34px;
+  cursor: pointer;
+  border-radius: 4px;
+  transform: rotate(-1.5deg);
+  transition: all 0.2s ease;
+  box-shadow: 2px 3px 0 rgba(140, 43, 34, 0.2);
+}
+.stamp-btn:hover {
+  background: rgba(140, 43, 34, 0.12);
+  transform: rotate(0deg) scale(1.02);
+}
+.stamp-btn:active {
+  transform: scale(0.98);
+}
+.msg {
+  color: var(--seal);
+  font-style: italic;
+  min-height: 1.5em;
+  margin: 10px 0 0;
+}
+.hint {
+  color: var(--faint);
+  font-style: italic;
+  font-size: 15px;
+  margin-top: 14px;
+}
+
+/* Two-column Journal Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 880px) {
+  .layout {
+    grid-template-columns: 310px 1fr;
+    gap: 34px;
+    align-items: start;
+  }
+}
+
+/* Left Column: Questions & Quill Scratchpad */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.card-box {
+  background: var(--card-bg);
+  border: 1px solid var(--faint-line);
+  padding: 18px 16px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 20px rgba(120, 80, 30, 0.08);
+  position: relative;
+}
+
+.sidebar h2.q {
+  font-size: 21px;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.q-sub {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--faint);
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+
+.ans {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  resize: vertical;
+  padding: 6px 0;
+  font-family: "Caveat", cursive;
+  font-size: 23px;
+  color: var(--pen-ink);
+  line-height: 1.35;
+}
+.ans:focus {
+  outline: none;
+  border-bottom: 2px solid var(--seal);
+}
+.ans::placeholder {
+  color: #9b8a6a;
+  font-style: italic;
+}
+.ans:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Quill Scratchpad / Tasks To Slot In */
+.scratchpad {
+  border: 1px dashed var(--faint);
+  background: rgba(255, 255, 255, 0.18);
+  padding: 16px 14px;
+}
+.scratchpad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.scratchpad-header h3 {
+  font-family: "IM Fell English", serif;
+  font-size: 19px;
+  color: var(--ink);
+  margin: 0;
+}
+.scratchpad-hint {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--faint);
+}
+
+.scratch-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.scratch-input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  font-family: "Caveat", cursive;
+  font-size: 21px;
+  color: var(--pen-ink);
+  padding: 4px 2px;
+}
+.scratch-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--seal);
+}
+.quill-add-btn {
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: "EB Garamond", serif;
+  font-size: 17px;
+  padding: 2px 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+.quill-add-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.scratch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px;
+  border-radius: 2px;
+  background: rgba(120, 80, 20, 0.04);
+}
+
+.scratch-card {
+  background: #fdf8eb;
+  border: 1px solid rgba(122, 102, 72, 0.4);
+  padding: 8px 10px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: grab;
+  box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+  user-select: none;
+  touch-action: none;
+}
+.scratch-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.12);
+  border-color: var(--seal);
+}
+.scratch-card:active {
+  cursor: grabbing;
+}
+.drag-handle {
+  color: var(--faint);
+  font-size: 16px;
+  cursor: grab;
+  user-select: none;
+  line-height: 1;
+}
+.scratch-card .title {
+  flex: 1;
+  font-family: "Caveat", cursive;
+  font-size: 21px;
+  color: var(--pen-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scratch-del {
+  background: none;
+  border: 0;
+  color: var(--faint);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.scratch-del:hover {
+  color: var(--seal);
+}
+
+/* Wax Seal & Evening */
+.seal {
+  display: none;
+  margin-top: 14px;
+  color: var(--seal);
+  font: 21px "IM Fell English", serif;
+  border: 3px double var(--seal);
+  padding: 6px 18px;
+  width: fit-content;
+  transform: rotate(-3deg);
+  border-radius: 40px;
+  background: rgba(140, 43, 34, 0.07);
+  box-shadow: 1px 2px 6px rgba(140, 43, 34, 0.2);
+}
+.seal.on { display: inline-block; }
+
+.early-reflect-btn {
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--faint);
+  color: var(--faint);
+  font-size: 14px;
+  font-style: italic;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+}
+.early-reflect-btn:hover { color: var(--seal); border-color: var(--seal); }
+
+/* Right Column: Timeline Tracker */
+.timeline-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--faint-line);
+}
+.timeline-title {
+  font-family: "IM Fell English", serif;
+  font-size: 22px;
+  margin: 0;
+  color: var(--ink);
+}
+.timeline-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pill-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: "EB Garamond", serif;
+  font-size: 15px;
+  font-style: italic;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-radius: 14px;
+  transition: all 0.15s;
+}
+.pill-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Scrollable Timeline Ledger */
+.timeline-ledger {
+  border: 2px solid var(--ink);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Hour Slot Row */
+.hour-row {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  border-bottom: 1px solid rgba(122, 102, 72, 0.4);
+  min-height: 72px;
+  transition: background 0.15s ease;
+  position: relative;
+}
+.hour-row:last-child {
+  border-bottom: 0;
+}
+.hour-row.now-hour {
+  background: var(--now);
+}
+
+.hour-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px solid var(--ink);
+  font: italic 24px "EB Garamond", serif;
+  color: var(--ink);
+  user-select: none;
+  background: rgba(246, 237, 214, 0.35);
+  position: relative;
+}
+.hour-badge small {
+  font-size: 11px;
+  font-style: normal;
+  color: var(--faint);
+  letter-spacing: 0.5px;
+  margin-top: -2px;
+}
+.hour-row.now-hour .hour-badge {
+  background: rgba(140, 43, 34, 0.18);
+  color: var(--seal);
+  font-weight: 700;
+}
+.hour-row.now-hour .hour-badge::before {
+  content: "NOW \2192";
+  position: absolute;
+  top: 4px;
+  font-size: 10px;
+  font-family: "EB Garamond", serif;
+  font-weight: 700;
+  color: var(--seal);
+  letter-spacing: 1px;
+}
+
+/* Hour Track */
+.hour-track {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.hour-track.drag-over {
+  background: var(--drop-target) !important;
+  outline: 2px dashed var(--seal);
+  outline-offset: -3px;
+}
+
+/* Empty Hour Slot Placeholder */
+.slot-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px dashed rgba(122, 102, 72, 0.35);
+  border-radius: 3px;
+  color: var(--faint);
+  font-style: italic;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.slot-empty:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.slot-empty .add-hint {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* Draggable & Resizable Time Block Card */
+.time-block {
+  background: #fcf8ee;
+  border-left: 4px solid var(--ink);
+  border-top: 1px solid rgba(122, 102, 72, 0.3);
+  border-right: 1px solid rgba(122, 102, 72, 0.3);
+  border-bottom: 1px solid rgba(122, 102, 72, 0.3);
+  border-radius: 0 4px 4px 0;
+  padding: 8px 12px 10px 14px;
+  position: relative;
+  box-shadow: 1px 2px 6px rgba(0, 0, 0, 0.07);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.time-block.dragging {
+  opacity: 0.45;
+  transform: scale(0.98);
+}
+.time-block:hover {
+  box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.time-block.done {
+  background: rgba(230, 220, 195, 0.45);
+  border-left-color: var(--faint);
+}
+.time-block.done .block-title-input,
+.time-block.done .block-notes {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--seal);
+  opacity: 0.65;
+}
+
+.block-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.block-grip {
+  cursor: grab;
+  color: var(--faint);
+  font-size: 16px;
+  user-select: none;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.block-grip:active { cursor: grabbing; }
+
+.block-title-input {
+  flex: 1;
+  font: 600 19px "EB Garamond", serif;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid transparent;
+}
+.block-title-input:focus {
+  outline: none;
+  border-bottom: 1px dashed var(--ink);
+}
+
+/* Duration Controller (+ / - 30m) */
+.duration-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--faint);
+  background: rgba(120, 80, 20, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(122, 102, 72, 0.25);
+  user-select: none;
+}
+.dur-btn {
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 3px;
+  line-height: 1;
+}
+.dur-btn:hover { color: var(--seal); }
+
+/* Tick Done Button */
+.tick-btn {
+  background: none;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--ink);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  margin-left: 4px;
+}
+.time-block.done .tick-btn {
+  background: var(--ink);
+  color: var(--paper);
+}
+.tick-btn:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+.time-block.done .tick-btn:hover {
+  background: var(--seal);
+  color: var(--paper);
+}
+
+.del-block-btn {
+  background: none;
+  border: 0;
+  color: var(--faint);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.del-block-btn:hover { color: var(--seal); }
+
+/* Block Notes Area (Handwriting) */
+.block-notes {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  resize: vertical;
+  min-height: 44px;
+  padding: 2px 0 0 24px;
+  font-family: "Caveat", cursive;
+  font-size: 21px;
+  color: var(--pen-ink);
+  line-height: 1.3;
+}
+.block-notes:focus {
+  outline: none;
+}
+.block-notes::placeholder {
+  color: #a49474;
+}
+
+/* Sleep Section */
+.sleep-row {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  border-top: 2px solid var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+}
+.sleep-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: italic 22px "EB Garamond", serif;
+  color: var(--faint);
+  border-right: 2px solid var(--ink);
+  padding: 16px 0;
+}
+.sleep-content {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 23px;
+  color: var(--faint);
+}
+
+/* Footer */
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  border-top: 2px solid var(--ink);
+  padding-top: 14px;
+  font-style: italic;
+}
+.foot-actions {
+  display: flex;
+  gap: 16px;
+}
+.foot-btn {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  font: italic 17px "EB Garamond", serif;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+.foot-btn:hover {
+  color: var(--seal);
+  border-color: var(--seal);
+}
+.progress-stat {
+  font-family: "IM Fell English", serif;
+  font-size: 19px;
+  color: var(--ink);
+}
+
+[hidden] { display: none !important; }
+
+@media (max-width: 600px) {
+  body { padding: 12px 6px 30px; }
+  .page { padding: 20px 14px 28px; }
+  .head h1 { font-size: 26px; }
+  .hour-badge { font-size: 20px; }
+  .strip button { width: 44px; height: 48px; font-size: 19px; }
+}
+</style>
+</head>
+<body>
+
+<main class="page" id="app" role="main"></main>
+
+<script>
+(function() {
+  var STORAGE_KEY = "franklin_day_page_v2";
+
+  var SAYINGS = [
+    "Diligence is the mother of good luck.",
+    "Early to bed and early to rise, makes a man healthy, wealthy, and wise.",
+    "Lost time is never found again.",
+    "Well done is better than well said.",
+    "He that can have patience can have what he will.",
+    "Drive thy business, let not that drive thee.",
+    "Employ thy time well, if thou meanest to gain leisure.",
+    "One today is worth two tomorrows.",
+    "Energy and persistence conquer all things.",
+    "An investment in knowledge pays the best interest.",
+    "Be at war with your vices, at peace with your neighbours, and let every new year find you a better man.",
+    "Little strokes fell great oaks.",
+    "Beware of little expenses; a small leak will sink a great ship.",
+    "Plough deep, while sluggards sleep, and you shall have corn to sell and to keep.",
+    "By failing to prepare, you are preparing to fail."
+  ];
+
+  var DEFAULT_BLOCKS = [
+    { id: "b1", hour: 5, duration: 2, title: "Rise, wash, and address Powerful Goodness", text: "Contrive day's business, take the resolution of the day, prosecute present study, breakfast.", done: false },
+    { id: "b2", hour: 8, duration: 4, title: "Work — Morning Endeavours", text: "Focus uninterrupted upon key undertakings.", done: false },
+    { id: "b3", hour: 12, duration: 2, title: "Read, overlook accounts, and dine", text: "Repast with temperance and examine the books.", done: false },
+    { id: "b4", hour: 14, duration: 4, title: "Work — Afternoon Diligence", text: "Correspondence, craft, and business affairs.", done: false },
+    { id: "b5", hour: 18, duration: 3, title: "Put things in their places; supper, music, diversion", text: "Converse, cheerful fellowship, and order.", done: false },
+    { id: "b6", hour: 21, duration: 1, title: "Examination of the day", text: "Quiet reflection before the quill is rested.", done: false }
+  ];
+
+  var app = document.getElementById("app");
+  var draggedItem = null;
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveState(s) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
+
+  function formatHour(h) {
+    var mod = ((h % 24) + 24) % 24;
+    var a = mod < 12 ? "am" : "pm";
+    var n = mod % 12 || 12;
+    return { n: n, a: a, raw: mod };
+  }
+
+  function ord(n) {
+    var s = ["th", "st", "nd", "rd"], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function getDateInfo() {
+    var d = new Date();
+    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    var mo = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var startOfYear = new Date(d.getFullYear(), 0, 0);
+    var doy = Math.floor((d - startOfYear) / 864e5);
+    var saying = SAYINGS[doy % SAYINGS.length];
+    return {
+      line: days[d.getDay()] + ", " + ord(d.getDate()) + " " + mo[d.getMonth()] + " " + d.getFullYear(),
+      page: doy,
+      saying: saying
+    };
+  }
+
+  function esc(s) {
+    return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  }
+
+  var state = loadState();
+  var closedNote = false;
+
+  if (state && state.date !== todayKey()) {
+    closedNote = true;
+    state = null;
+  }
+
+  function renderHeader() {
+    var d = getDateInfo();
+    return '<div class="head">' +
+      '<div class="head-ornament">\u25c6 \u25c6 \u25c6</div>' +
+      '<h1>The Daily Page</h1>' +
+      '<p class="subtitle">' + d.line + ' \u2014 page ' + d.page + ' of the year</p>' +
+      '<p class="saying">\u201c' + d.saying + '\u201d</p>' +
+    '</div>';
+  }
+
+  function renderHourStrip(id, hours, selected) {
+    var btns = hours.map(function(h) {
+      var o = formatHour(h);
+      return '<button type="button" data-h="' + h + '" aria-pressed="' + (h === selected) + '">' +
+        o.n + '<small>' + o.a + '</small></button>';
+    }).join("");
+    return '<div class="strip-wrap"><div class="strip" id="' + id + '" role="group">' + btns + '</div></div>';
+  }
+
+  /* -------------------------------------------------------------
+     SETUP SCREEN
+  ------------------------------------------------------------- */
+  function showSetup() {
+    var rise = state ? state.rise : 5;
+    var rest = state ? state.rest : 22;
+    var morningText = state ? state.morning : "";
+
+    app.innerHTML = renderHeader() +
+      '<section class="setup">' +
+      (closedNote ? '<div class="closed-banner">Yesterday\u2019s page is closed</div><br>' : '') +
+      '<h2 class="q">At what hour do you rise?</h2>' +
+      '<p class="setup-helper">Select the hour the quill awakens.</p>' +
+      renderHourStrip("riseStrip", [3, 4, 5, 6, 7, 8, 9, 10, 11], rise) +
+      '<h2 class="q">At what hour do you rest?</h2>' +
+      '<p class="setup-helper">Select the hour of sleep and repose.</p>' +
+      renderHourStrip("restStrip", [20, 21, 22, 23, 24], rest) +
+      '<div class="morning-input-wrap">' +
+        '<label for="morningInput">The Morning Question:<br><em>\u201cWhat good shall I do this day?\u201d</em></label>' +
+        '<textarea class="ans" id="morningInput" rows="2" maxlength="160" placeholder="Today I shall\u2026">' + esc(morningText) + '</textarea>' +
+      '</div>' +
+      '<p class="msg" id="setupMsg"></p>' +
+      '<button class="stamp-btn" id="beginDayBtn" type="button">Begin the day</button>' +
+      '<p class="hint">Your page is for today only. Flexible blocks can be dragged, scrolled & written freely.</p>' +
+      '</section>';
+
+    function wireStrip(id, onChange) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("click", function(e) {
+        var b = e.target.closest("button");
+        if (!b) return;
+        el.querySelectorAll("button").forEach(function(x) { x.setAttribute("aria-pressed", "false"); });
+        b.setAttribute("aria-pressed", "true");
+        onChange(+b.dataset.h);
+      });
+    }
+
+    wireStrip("riseStrip", function(h) { rise = h; });
+    wireStrip("restStrip", function(h) { rest = h; });
+
+    document.getElementById("beginDayBtn").onclick = function() {
+      if (rest <= rise || (rest - rise) < 8) {
+        document.getElementById("setupMsg").textContent = "Give the day a little more room (at least 8 hours).";
+        return;
+      }
+      var morningVal = document.getElementById("morningInput").value;
+      if (!state) {
+        var initialBlocks = DEFAULT_BLOCKS.map(function(b) {
+          var shifted = Object.assign({}, b);
+          if (shifted.hour < rise) shifted.hour = rise;
+          if (shifted.hour >= rest) shifted.hour = Math.max(rise, rest - 1);
+          return shifted;
+        });
+        state = {
+          date: todayKey(),
+          rise: rise,
+          rest: rest,
+          morning: morningVal,
+          evening: "",
+          sealed: false,
+          scratchpad: [
+            { id: "s1", text: "Draft letter to Peter Collinson" },
+            { id: "s2", text: "Audit print shop ledger" },
+            { id: "s3", text: "Walk by the riverbank" }
+          ],
+          blocks: initialBlocks
+        };
+      } else {
+        state.rise = rise;
+        state.rest = rest;
+        state.morning = morningVal;
+      }
+      saveState(state);
+      showDay();
+    };
+  }
+
+  /* -------------------------------------------------------------
+     DAY VIEW WITH SCROLLABLE HOURS & DRAG-AND-DROP
+  ------------------------------------------------------------- */
+  function showDay() {
+    var rise = state.rise;
+    var rest = state.rest;
+    var currentHour = new Date().getHours();
+    var eveningUnlocked = state.forceEvening || currentHour >= (rest - 2);
+    var doneCount = state.blocks.filter(function(b) { return b.done; }).length;
+    var totalCount = state.blocks.length;
+
+    var hoursHtml = "";
+    for (var h = rise; h < rest; h++) {
+      var isNow = (h === currentHour);
+      var o = formatHour(h);
+
+      var blocksAtThisHour = state.blocks.filter(function(b) { return b.hour === h; });
+
+      var blocksHtml = "";
+      if (blocksAtThisHour.length > 0) {
+        blocksHtml = blocksAtThisHour.map(function(b) {
+          return renderBlockHtml(b);
+        }).join("");
+      }
+
+      var emptySlotHtml = '<div class="slot-empty" data-add-hour="' + h + '">' +
+        '<span>+ Add intention at ' + o.n + ' ' + o.a + '</span>' +
+        '<span class="add-hint">or drop here \u2193</span>' +
+        '</div>';
+
+      hoursHtml += '<div class="hour-row' + (isNow ? ' now-hour' : '') + '" data-hour="' + h + '" id="hour-row-' + h + '">' +
+        '<div class="hour-badge">' + o.n + '<small>' + o.a + '</small></div>' +
+        '<div class="hour-track" data-track-hour="' + h + '">' +
+          blocksHtml +
+          emptySlotHtml +
+        '</div>' +
+        '</div>';
+    }
+
+    var restHourObj = formatHour(rest);
+    var sleepHtml = '<div class="sleep-row">' +
+      '<div class="sleep-badge">' + restHourObj.n + '<small>' + restHourObj.a + '</small></div>' +
+      '<div class="sleep-content">\u201cSleep, wholesome and uninterrupted.\u201d</div>' +
+      '</div>';
+
+    var scratchListHtml = state.scratchpad.map(function(s) {
+      return '<div class="scratch-card" draggable="true" data-scratch-id="' + s.id + '">' +
+        '<span class="drag-handle">\u22ee\u22ee</span>' +
+        '<span class="title">' + esc(s.text) + '</span>' +
+        '<button type="button" class="scratch-del" title="Remove" data-del-scratch="' + s.id + '">\u00d7</button>' +
+        '</div>';
+    }).join("");
+
+    var pageHtml = renderHeader() +
+      '<div class="layout">' +
+        /* Sidebar */
+        '<div class="sidebar">' +
+          '<div class="card-box">' +
+            '<h2 class="q">The Morning Question</h2>' +
+            '<p class="q-sub">What good shall I do this day?</p>' +
+            '<textarea class="ans" id="morningInput" rows="2" maxlength="160" placeholder="Today I will\u2026">' + esc(state.morning) + '</textarea>' +
+          '</div>' +
+
+          /* Quill Scratchpad */
+          '<div class="scratchpad card-box">' +
+            '<div class="scratchpad-header">' +
+              '<h3>Quill Scratchpad</h3>' +
+              '<span class="scratchpad-hint">Drag into any hour</span>' +
+            '</div>' +
+            '<div class="scratch-input-row">' +
+              '<input type="text" class="scratch-input" id="newScratchText" placeholder="Jot an intention\u2026" maxlength="80">' +
+              '<button type="button" class="quill-add-btn" id="addScratchBtn">Jot</button>' +
+            '</div>' +
+            '<div class="scratch-list" id="scratchList">' +
+              (scratchListHtml || '<div style="font-size:14px; font-style:italic; color:var(--faint); padding:8px 4px;">No unslotted tasks. Jot above and drag onto the page!</div>') +
+            '</div>' +
+          '</div>' +
+
+          /* Evening Reflection */
+          '<div class="card-box">' +
+            '<h2 class="q">The Evening Question</h2>' +
+            '<p class="q-sub">What good have I done today?</p>' +
+            '<textarea class="ans" id="eveningInput" rows="3" maxlength="200" ' +
+              (eveningUnlocked ? '' : 'disabled ') +
+              'placeholder="' + (eveningUnlocked ? 'Tonight I observed and accomplished\u2026' : 'Opens in the evening (' + formatHour(rest - 2).n + ' ' + formatHour(rest - 2).a + ')') + '">' +
+              esc(state.evening) +
+            '</textarea>' +
+            (!eveningUnlocked ? '<button type="button" class="early-reflect-btn" id="unlockEveningBtn">Reflect earlier</button>' : '') +
+            '<div class="seal' + (state.sealed ? ' on' : '') + '" id="sealBadge">Page complete \u2022 1726</div>' +
+          '</div>' +
+        '</div>' +
+
+        /* Timeline Section */
+        '<div class="timeline-section">' +
+          '<div class="timeline-toolbar">' +
+            '<h2 class="timeline-title">The Scheme of the Hours</h2>' +
+            '<div class="timeline-actions">' +
+              '<button type="button" class="pill-btn" id="addBlockBtn">+ New Block</button>' +
+              '<button type="button" class="pill-btn" id="changeHoursBtn">Hours: ' + formatHour(rise).n + formatHour(rise).a + ' \u2013 ' + formatHour(rest).n + formatHour(rest).a + '</button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="timeline-ledger" id="timelineLedger">' +
+            hoursHtml +
+            sleepHtml +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* Footer */
+      '<div class="foot">' +
+        '<span class="progress-stat" id="progressStat">' + doneCount + ' of ' + totalCount + ' blocks fulfilled</span>' +
+        '<div class="foot-actions">' +
+          '<button type="button" class="foot-btn" id="printBtn">Print Journal</button>' +
+          '<button type="button" class="foot-btn" id="resetBtn">Reset Day</button>' +
+        '</div>' +
+      '</div>';
+
+    app.innerHTML = pageHtml;
+
+    var nowRow = document.getElementById("hour-row-" + currentHour);
+    if (nowRow) {
+      setTimeout(function() {
+        nowRow.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 100);
+    }
+
+    wireDayEvents();
+  }
+
+  function renderBlockHtml(b) {
+    var durText = b.duration === 1 ? "1 hr" : (b.duration + " hrs");
+    return '<div class="time-block' + (b.done ? ' done' : '') + '" draggable="true" data-block-id="' + b.id + '">' +
+      '<div class="block-top">' +
+        '<span class="block-grip" title="Drag to reschedule">\u22ee\u22ee</span>' +
+        '<input class="block-title-input" value="' + esc(b.title) + '" data-field="title" aria-label="Block title">' +
+        '<div class="duration-chip">' +
+          '<button type="button" class="dur-btn" data-dur-chg="-0.5" title="Shorten by 30 mins">\u2212</button>' +
+          '<span>' + durText + '</span>' +
+          '<button type="button" class="dur-btn" data-dur-chg="0.5" title="Lengthen by 30 mins">+</button>' +
+        '</div>' +
+        '<button type="button" class="tick-btn" data-action="toggle-done" title="Mark fulfilled">\u2713</button>' +
+        '<button type="button" class="del-block-btn" data-action="delete-block" title="Remove block">\u00d7</button>' +
+      '</div>' +
+      '<textarea class="block-notes" rows="2" maxlength="200" data-field="text" placeholder="Add specific notes, books, or steps\u2026">' + esc(b.text) + '</textarea>' +
+    '</div>';
+  }
+
+  /* -------------------------------------------------------------
+     WIRE INTERACTIONS & DRAG-AND-DROP
+  ------------------------------------------------------------- */
+  function wireDayEvents() {
+    var morningInput = document.getElementById("morningInput");
+    if (morningInput) {
+      morningInput.addEventListener("input", function(e) {
+        state.morning = e.target.value;
+        saveState(state);
+      });
+    }
+
+    var eveningInput = document.getElementById("eveningInput");
+    if (eveningInput) {
+      eveningInput.addEventListener("input", function(e) {
+        state.evening = e.target.value;
+        state.sealed = e.target.value.trim().length > 0;
+        var sealBadge = document.getElementById("sealBadge");
+        if (sealBadge) sealBadge.classList.toggle("on", state.sealed);
+        saveState(state);
+      });
+    }
+
+    var unlockEveningBtn = document.getElementById("unlockEveningBtn");
+    if (unlockEveningBtn) {
+      unlockEveningBtn.addEventListener("click", function() {
+        state.forceEvening = true;
+        saveState(state);
+        showDay();
+      });
+    }
+
+    var addScratchBtn = document.getElementById("addScratchBtn");
+    var newScratchText = document.getElementById("newScratchText");
+    function addScratch() {
+      var val = (newScratchText.value || "").trim();
+      if (!val) return;
+      state.scratchpad.push({ id: "s_" + Date.now(), text: val });
+      newScratchText.value = "";
+      saveState(state);
+      showDay();
+    }
+    if (addScratchBtn && newScratchText) {
+      addScratchBtn.addEventListener("click", addScratch);
+      newScratchText.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addScratch();
+        }
+      });
+    }
+
+    document.querySelectorAll("[data-del-scratch]").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var id = btn.dataset.delScratch;
+        state.scratchpad = state.scratchpad.filter(function(s) { return s.id !== id; });
+        saveState(state);
+        showDay();
+      });
+    });
+
+    var addBlockBtn = document.getElementById("addBlockBtn");
+    if (addBlockBtn) {
+      addBlockBtn.addEventListener("click", function() {
+        var startH = state.rise;
+        state.blocks.push({
+          id: "b_" + Date.now(),
+          hour: startH,
+          duration: 1,
+          title: "New Intention",
+          text: "",
+          done: false
+        });
+        saveState(state);
+        showDay();
+      });
+    }
+
+    document.querySelectorAll("[data-add-hour]").forEach(function(slot) {
+      slot.addEventListener("click", function() {
+        var h = +slot.dataset.addHour;
+        state.blocks.push({
+          id: "b_" + Date.now(),
+          hour: h,
+          duration: 1,
+          title: "Focused Endeavour",
+          text: "",
+          done: false
+        });
+        saveState(state);
+        showDay();
+      });
+    });
+
+    var changeHoursBtn = document.getElementById("changeHoursBtn");
+    if (changeHoursBtn) {
+      changeHoursBtn.addEventListener("click", showSetup);
+    }
+
+    var printBtn = document.getElementById("printBtn");
+    if (printBtn) {
+      printBtn.addEventListener("click", function() { window.print(); });
+    }
+    var resetBtn = document.getElementById("resetBtn");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function() {
+        if (confirm("Reset today\u2019s page to the default morning state?")) {
+          localStorage.removeItem(STORAGE_KEY);
+          state = null;
+          showSetup();
+        }
+      });
+    }
+
+    document.querySelectorAll(".time-block").forEach(function(blockEl) {
+      var blockId = blockEl.dataset.blockId;
+      var blockObj = state.blocks.find(function(b) { return b.id === blockId; });
+      if (!blockObj) return;
+
+      var titleInput = blockEl.querySelector(".block-title-input");
+      if (titleInput) {
+        titleInput.addEventListener("input", function(e) {
+          blockObj.title = e.target.value;
+          saveState(state);
+        });
+      }
+
+      var notesTextarea = blockEl.querySelector(".block-notes");
+      if (notesTextarea) {
+        notesTextarea.addEventListener("input", function(e) {
+          blockObj.text = e.target.value;
+          saveState(state);
+        });
+      }
+
+      blockEl.querySelectorAll("[data-dur-chg]").forEach(function(btn) {
+        btn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          var delta = parseFloat(btn.dataset.durChg);
+          var nextDur = Math.max(0.5, Math.min(8, (blockObj.duration || 1) + delta));
+          blockObj.duration = nextDur;
+          saveState(state);
+          showDay();
+        });
+      });
+
+      var tickBtn = blockEl.querySelector('[data-action="toggle-done"]');
+      if (tickBtn) {
+        tickBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          blockObj.done = !blockObj.done;
+          saveState(state);
+          showDay();
+        });
+      }
+
+      var delBtn = blockEl.querySelector('[data-action="delete-block"]');
+      if (delBtn) {
+        delBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          state.blocks = state.blocks.filter(function(b) { return b.id !== blockId; });
+          saveState(state);
+          showDay();
+        });
+      }
+    });
+
+    // -------------------------------------------------------------
+    // DRAG AND DROP
+    // -------------------------------------------------------------
+    document.querySelectorAll(".scratch-card").forEach(function(card) {
+      card.addEventListener("dragstart", function(e) {
+        var id = card.dataset.scratchId;
+        var item = state.scratchpad.find(function(s) { return s.id === id; });
+        draggedItem = { type: "scratch", id: id, data: item };
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", item ? item.text : "Task");
+        card.style.opacity = "0.4";
+      });
+      card.addEventListener("dragend", function() {
+        card.style.opacity = "1";
+        clearAllDragOver();
+        draggedItem = null;
+      });
+    });
+
+    document.querySelectorAll(".time-block").forEach(function(blockEl) {
+      blockEl.addEventListener("dragstart", function(e) {
+        var blockId = blockEl.dataset.blockId;
+        var blockObj = state.blocks.find(function(b) { return b.id === blockId; });
+        draggedItem = { type: "block", id: blockId, data: blockObj };
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", blockObj ? blockObj.title : "Block");
+        setTimeout(function() { blockEl.classList.add("dragging"); }, 0);
+      });
+      blockEl.addEventListener("dragend", function() {
+        blockEl.classList.remove("dragging");
+        clearAllDragOver();
+        draggedItem = null;
+      });
+    });
+
+    document.querySelectorAll(".hour-track").forEach(function(track) {
+      track.addEventListener("dragover", function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        track.classList.add("drag-over");
+      });
+
+      track.addEventListener("dragleave", function(e) {
+        if (!track.contains(e.relatedTarget)) {
+          track.classList.remove("drag-over");
+        }
+      });
+
+      track.addEventListener("drop", function(e) {
+        e.preventDefault();
+        track.classList.remove("drag-over");
+        var targetHour = +track.dataset.trackHour;
+
+        if (!draggedItem) return;
+
+        if (draggedItem.type === "scratch") {
+          var scratchId = draggedItem.id;
+          var scratchObj = state.scratchpad.find(function(s) { return s.id === scratchId; });
+          if (scratchObj) {
+            state.scratchpad = state.scratchpad.filter(function(s) { return s.id !== scratchId; });
+            state.blocks.push({
+              id: "b_" + Date.now(),
+              hour: targetHour,
+              duration: 1,
+              title: scratchObj.text,
+              text: "",
+              done: false
+            });
+            saveState(state);
+            showDay();
+          }
+        } else if (draggedItem.type === "block") {
+          var bId = draggedItem.id;
+          var bObj = state.blocks.find(function(b) { return b.id === bId; });
+          if (bObj) {
+            bObj.hour = targetHour;
+            saveState(state);
+            showDay();
+          }
+        }
+        draggedItem = null;
+      });
+    });
+  }
+
+  function clearAllDragOver() {
+    document.querySelectorAll(".hour-track").forEach(function(t) {
+      t.classList.remove("drag-over");
+    });
+  }
+
+  if (state) {
+    showDay();
+  } else {
+    showSetup();
+  }
+})();
+</script>
+</body>
+</html>
