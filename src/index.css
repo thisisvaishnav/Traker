@@ -814,7 +814,7 @@ h1, h2, h3, .q {
   }
 }
 .hour-cell.is-now::before {
-  content: "\2192";
+  content: "\\2192";
   position: absolute;
   left: 2px;
   font-size: 12px;
@@ -1396,66 +1396,149 @@ h1, h2, h3, .q {
   color: #fff;
 }
 
-/* Hours Selection Modal & Strip */
-.hours-card {
-  max-width: 640px;
+/* ==========================================================================
+   THE SCHEME OF THE HOURS LANDING PAGE VIEW
+   ========================================================================== */
+.scheme-page-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0 20px;
+  animation: fadeIn 0.3s ease;
+  width: 100%;
+}
+
+.scheme-parchment-frame {
+  max-width: 760px;
   width: 100%;
   background:
-    radial-gradient(ellipse at 15% 10%, rgba(160, 115, 45, 0.24), transparent 50%),
-    radial-gradient(ellipse at 85% 90%, rgba(130, 85, 30, 0.25), transparent 50%),
-    var(--paper);
+    radial-gradient(ellipse at 15% 10%, rgba(160, 115, 45, 0.22), transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(130, 85, 30, 0.22), transparent 50%),
+    rgba(220, 203, 168, 0.35);
   border: 2px solid var(--ink);
   border-radius: 4px;
-  padding: 24px 12px 20px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.75), inset 0 0 65px rgba(85, 55, 18, 0.3);
+  padding: 24px 14px 26px;
+  box-shadow: inset 0 0 50px rgba(120, 80, 30, 0.12);
   position: relative;
   text-align: center;
-  animation: fadeIn 0.2s ease;
   box-sizing: border-box;
 }
 
 @media (min-width: 600px) {
-  .hours-card {
-    padding: 30px 24px 26px;
+  .scheme-parchment-frame {
+    padding: 38px 32px 36px;
   }
 }
 
-.hours-card::after {
+.scheme-parchment-frame::after {
   content: "";
   position: absolute;
-  top: 4px; left: 4px; right: 4px; bottom: 4px;
+  top: 5px; left: 5px; right: 5px; bottom: 5px;
   border: 1px solid rgba(122, 102, 72, 0.35);
   pointer-events: none;
 }
 @media (min-width: 600px) {
-  .hours-card::after {
-    top: 6px; left: 6px; right: 6px; bottom: 6px;
+  .scheme-parchment-frame::after {
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
   }
 }
 
-.hours-q {
+.scheme-main-title {
   font-family: "IM Fell English", serif;
-  font-size: 19px;
+  font-size: 26px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   color: var(--ink);
-  margin: 14px 0 3px;
+  margin: 6px 0 10px;
+  line-height: 1.2;
 }
 @media (min-width: 600px) {
-  .hours-q {
-    font-size: 22px;
-    margin: 16px 0 4px;
+  .scheme-main-title {
+    font-size: 34px;
+    letter-spacing: 1px;
+    margin: 8px 0 14px;
   }
 }
 
-.hours-helper {
+.scheme-epigraph {
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--seal);
+  max-width: 620px;
+  margin: 0 auto 12px;
+}
+@media (min-width: 600px) {
+  .scheme-epigraph {
+    font-size: 19px;
+    margin-bottom: 16px;
+  }
+}
+
+.scheme-sub-text {
+  font-style: italic;
+  font-size: 15px;
+  color: var(--faint);
+  max-width: 600px;
+  margin: 0 auto 18px;
+  line-height: 1.4;
+}
+@media (min-width: 600px) {
+  .scheme-sub-text {
+    font-size: 17px;
+    margin-bottom: 22px;
+  }
+}
+
+.scheme-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px dashed var(--faint-line);
+  margin: 16px auto 20px;
+  max-width: 480px;
+  position: relative;
+}
+.scheme-divider-mark {
+  background: var(--paper);
+  padding: 0 10px;
+  color: var(--faint);
+  font-size: 16px;
+  margin-top: -12px;
+}
+
+.scheme-section {
+  margin-bottom: 20px;
+}
+@media (min-width: 600px) {
+  .scheme-section {
+    margin-bottom: 26px;
+  }
+}
+
+.scheme-question {
+  font-family: "IM Fell English", serif;
+  font-size: 20px;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+@media (min-width: 600px) {
+  .scheme-question {
+    font-size: 24px;
+  }
+}
+
+.scheme-hint {
   font-size: 14px;
   font-style: italic;
   color: var(--faint);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 @media (min-width: 600px) {
-  .hours-helper {
-    font-size: 15px;
-    margin: 0 0 10px;
+  .scheme-hint {
+    font-size: 16px;
+    margin-bottom: 14px;
   }
 }
 
@@ -1539,41 +1622,96 @@ h1, h2, h3, .q {
   color: var(--paper2);
 }
 
-.hours-summary {
+.scheme-balance-box {
   font-family: "IM Fell English", serif;
   font-style: italic;
-  font-size: 15px;
   color: var(--seal);
   border: 1px dashed var(--seal);
   background: rgba(140, 43, 34, 0.06);
-  padding: 6px 14px;
+  padding: 10px 16px;
   border-radius: 20px;
-  margin: 14px auto 16px;
+  margin: 18px auto 24px;
   width: fit-content;
   max-width: 100%;
   box-sizing: border-box;
 }
 @media (min-width: 600px) {
-  .hours-summary {
-    font-size: 18px;
-    padding: 8px 18px;
-    margin: 18px auto 20px;
+  .scheme-balance-box {
+    padding: 12px 24px;
+    margin: 22px auto 28px;
   }
 }
 
-.hours-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
+.scheme-balance-hours {
+  font-size: 17px;
+  margin-bottom: 2px;
 }
-@media (max-width: 500px) {
-  .hours-actions {
-    flex-direction: column;
+@media (min-width: 600px) {
+  .scheme-balance-hours {
+    font-size: 20px;
   }
-  .hours-actions button {
-    width: 100%;
+}
+
+.scheme-balance-sub {
+  font-size: 14px;
+  color: var(--ink);
+}
+@media (min-width: 600px) {
+  .scheme-balance-sub {
+    font-size: 16px;
   }
+}
+
+.scheme-cta-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.scheme-proceed-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: 2px solid var(--ink);
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 18px;
+  padding: 10px 24px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+@media (min-width: 600px) {
+  .scheme-proceed-btn {
+    font-size: 21px;
+    padding: 12px 32px;
+  }
+}
+.scheme-proceed-btn:hover {
+  background: var(--seal);
+  border-color: var(--seal);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(140, 43, 34, 0.35);
+}
+
+.scheme-reset-link {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed var(--faint);
+  font-family: "EB Garamond", serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.15s ease;
+}
+.scheme-reset-link:hover {
+  color: var(--seal);
+  border-bottom: 1px solid var(--seal);
 }
 
 .pill-btn.hours-btn {

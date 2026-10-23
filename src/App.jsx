@@ -74,27 +74,18 @@ function todayKey() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-function ord(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function getDateInfo() {
   const d = new Date();
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const mo = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  const startOfYear = new Date(d.getFullYear(), 0, 0);
-  const doy = Math.floor((d - startOfYear) / 864e5);
-  const saying = SAYINGS[doy % SAYINGS.length];
-  return {
-    line: `${days[d.getDay()]}, ${ord(d.getDate())} ${mo[d.getMonth()]} ${d.getFullYear()}`,
-    page: doy,
-    saying
-  };
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const line = d.toLocaleDateString('en-US', options);
+
+  const start = new Date(d.getFullYear(), 0, 0);
+  const diff = d - start + (start.getTimezoneOffset() - d.getTimezoneOffset()) * 60 * 1000;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+
+  const saying = SAYINGS[dayOfYear % SAYINGS.length];
+  return { line, page: dayOfYear, saying };
 }
 
 function formatHour(h) {
@@ -107,6 +98,10 @@ function formatHour(h) {
 export default function App() {
   const { user, isLoaded: userLoaded, isSignedIn } = useUser();
   const [dateInfo] = useState(getDateInfo);
+
+  // View state: 'scheme' (The Scheme of the Hours page) | 'tracker' (The Daily Page writing page)
+  const [currentView, setCurrentView] = useState('scheme');
+
   const [morning, setMorning] = useState('Resolve to act with diligence and justice in all things.');
   const [evening, setEvening] = useState('');
   const [forceEvening, setForceEvening] = useState(false);
@@ -123,7 +118,6 @@ export default function App() {
   // Wake-up and Sleep Hour State
   const [riseHour, setRiseHour] = useState(5); // default 5:00 AM
   const [restHour, setRestHour] = useState(22); // default 10:00 PM
-  const [hoursModalOpen, setHoursModalOpen] = useState(false);
   const [tempRise, setTempRise] = useState(5);
   const [tempRest, setTempRest] = useState(22);
 
@@ -164,14 +158,22 @@ export default function App() {
         if (parsed.forceEvening !== undefined) setForceEvening(parsed.forceEvening);
         if (parsed.scratchpad) setScratchpad(parsed.scratchpad);
         if (parsed.blocks) setBlocks(parsed.blocks);
-        if (parsed.riseHour !== undefined) setRiseHour(parsed.riseHour);
-        if (parsed.restHour !== undefined) setRestHour(parsed.restHour);
+        if (parsed.riseHour !== undefined) {
+          setRiseHour(parsed.riseHour);
+          setTempRise(parsed.riseHour);
+        }
+        if (parsed.restHour !== undefined) {
+          setRestHour(parsed.restHour);
+          setTempRest(parsed.restHour);
+        }
       } else {
-        // Reset to initial canonical state for a fresh day/user
+        // Fresh canonical state
         setBlocks(INITIAL_CANONICAL_BLOCKS);
         setEvening('');
         setRiseHour(5);
         setRestHour(22);
+        setTempRise(5);
+        setTempRest(22);
       }
     } catch (e) {
       console.error(e);
@@ -227,18 +229,20 @@ export default function App() {
 
   const doneCount = blocks.filter((b) => b.done).length;
 
-  // Open hours configuration modal
-  const openHoursModal = () => {
+  // Navigation handlers
+  const openSchemePage = () => {
     setTempRise(riseHour);
     setTempRest(restHour);
-    setHoursModalOpen(true);
+    setCurrentView('scheme');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSaveHours = (e) => {
+  const handleApplyHoursAndProceed = (e) => {
     e?.preventDefault();
     setRiseHour(tempRise);
     setRestHour(tempRest);
-    setHoursModalOpen(false);
+    setCurrentView('tracker');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleResetHoursCanonical = () => {
@@ -309,79 +313,75 @@ export default function App() {
     setScratchpad((prev) => prev.filter((s) => s.id !== scratchId));
   };
 
-  const handleUpdateBlockField = (idx, field, val) => {
+  const handleToggleDone = (blockIdx) => {
     setBlocks((prev) => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], [field]: val };
+      copy[blockIdx] = { ...copy[blockIdx], done: !copy[blockIdx].done };
       return copy;
     });
   };
 
-  const handleSetDuration = (idx, dur) => {
-    if (![2, 3, 4].includes(dur)) return;
+  const handleSetDuration = (blockIdx, dur) => {
     setBlocks((prev) => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], duration: dur };
+      copy[blockIdx] = { ...copy[blockIdx], duration: dur };
       return copy;
     });
   };
 
-  const handleToggleDone = (idx) => {
+  const handleUpdateBlockField = (blockIdx, field, val) => {
     setBlocks((prev) => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], done: !copy[idx].done };
+      copy[blockIdx] = { ...copy[blockIdx], [field]: val };
       return copy;
     });
   };
 
-  const handleDeleteTask = (bIdx, tIdx) => {
+  const handleDeleteTask = (blockIdx, taskIdx) => {
     setBlocks((prev) => {
       const copy = [...prev];
-      const tasks = [...(copy[bIdx].tasks || [])];
-      tasks.splice(tIdx, 1);
-      copy[bIdx] = { ...copy[bIdx], tasks };
+      const tasks = copy[blockIdx].tasks.filter((_, i) => i !== taskIdx);
+      copy[blockIdx] = { ...copy[blockIdx], tasks };
       return copy;
     });
-  };
-
-  const handleResetToDefault = () => {
-    if (window.confirm("Reset blocks to Franklin's canonical 1726 scheme (3h, 4h, 2h, 4h, 4h and 5am – 10pm)?")) {
-      setBlocks(JSON.parse(JSON.stringify(INITIAL_CANONICAL_BLOCKS)));
-      setRiseHour(5);
-      setRestHour(22);
-    }
   };
 
   const handleClearTasks = () => {
-    if (window.confirm('Clear written notes and tasks from all blocks?')) {
+    if (window.confirm('Wipe all intentions and reset block notes for the day?')) {
       setBlocks((prev) =>
         prev.map((b) => ({
           ...b,
-          text: '',
           tasks: [],
+          text: '',
           done: false
         }))
       );
-      setEvening('');
     }
   };
 
-  // Drag & Drop Handlers
-  const handleDragStartScratch = (e, item) => {
-    setDraggedItem({ type: 'scratch', id: item.id, data: item });
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', item.text);
+  const handleResetToDefault = () => {
+    if (window.confirm("Restore Benjamin Franklin's canonical 1726 schedule?")) {
+      setBlocks(INITIAL_CANONICAL_BLOCKS);
+      setRiseHour(5);
+      setRestHour(22);
+      setTempRise(5);
+      setTempRest(22);
+    }
   };
 
-  const handleDragStartBlock = (e, idx) => {
-    setDraggedItem({ type: 'block', index: idx, id: blocks[idx].id });
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', blocks[idx].title);
+  // Drag and drop handlers
+  const handleDragStartScratch = (e, item) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'scratch', item }));
+    setDraggedItem({ type: 'scratch', id: item.id, text: item.text });
+  };
+
+  const handleDragStartBlock = (e, index) => {
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'block', index }));
+    setDraggedItem({ type: 'block', index });
   };
 
   const handleDragOver = (e, idx) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
     if (dragOverIdx !== idx) setDragOverIdx(idx);
   };
 
@@ -395,7 +395,13 @@ export default function App() {
     if (!draggedItem) return;
 
     if (draggedItem.type === 'scratch') {
-      const item = scratchpad.find((s) => s.id === draggedItem.id);
+      const raw = e.dataTransfer.getData('application/json');
+      let item = null;
+      try {
+        item = JSON.parse(raw).item;
+      } catch (err) {
+        item = scratchpad.find((s) => s.id === draggedItem.id);
+      }
       if (item) {
         setBlocks((prev) => {
           const copy = [...prev];
@@ -478,6 +484,16 @@ export default function App() {
         </div>
 
         <div className="ledger-top-right">
+          {currentView === 'tracker' && (
+            <button
+              type="button"
+              className="auth-btn"
+              onClick={openSchemePage}
+              title="Return to the Scheme of the Hours page"
+            >
+              ◷ Scheme of Hours
+            </button>
+          )}
           {isSignedIn ? (
             <>
               <span className="inscribed-saved-badge">
@@ -506,394 +522,408 @@ export default function App() {
         </div>
       </div>
 
-      {/* Header */}
-      <div className="head">
-        <div className="head-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
-        <h1>{displayName ? `${displayName}'s Daily Page` : 'The Daily Page'}</h1>
-        <p className="subtitle">{dateInfo.line} &mdash; page {dateInfo.page} of the year</p>
-        <p className="saying">&ldquo;{dateInfo.saying}&rdquo;</p>
-      </div>
+      {/* VIEW 1: THE SCHEME OF THE HOURS PAGE */}
+      {currentView === 'scheme' ? (
+        <section className="scheme-page-view" aria-label="The Scheme of the Hours">
+          <div className="scheme-parchment-frame">
+            <div className="head-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
+            <h1 className="scheme-main-title">The Scheme of the Hours</h1>
+            <p className="scheme-epigraph">
+              &ldquo;Let each part of your business have its time. Resolve to perform what you ought; perform without fail what you resolve.&rdquo;
+            </p>
+            <p className="scheme-sub-text">
+              Before taking quill to parchment, establish the boundaries of thy day &mdash; the hour the spirit awaketh, and the hour it seeketh wholesome repose.
+            </p>
 
-      <div className="layout">
-        {/* Morning Reflection */}
-        <div className="card-box card-morning">
-          <h2 className="q">The Morning Question</h2>
-          <p className="q-sub">What good shall I do this day?</p>
-          <textarea
-            className="ans"
-            rows={2}
-            maxLength={160}
-            value={morning}
-            onChange={(e) => setMorning(e.target.value)}
-            placeholder="Today I will…"
-          />
-        </div>
-
-        {/* Quill Scratchpad */}
-        <div className="scratchpad card-box card-scratch">
-          <div className="scratchpad-header">
-            <div>
-              <h3>Quill Scratchpad</h3>
-              <span className="scratchpad-hint">Drag into block or tap Slot &#x25be;</span>
+            <div className="scheme-divider">
+              <span className="scheme-divider-mark">&#x2740;</span>
             </div>
-          </div>
-          <form className="scratch-input-row" onSubmit={handleAddScratch}>
-            <input
-              type="text"
-              className="scratch-input"
-              placeholder="Jot an intention…"
-              maxLength={80}
-              value={newScratch}
-              onChange={(e) => setNewScratch(e.target.value)}
-            />
-            <button type="submit" className="quill-add-btn">Jot</button>
-          </form>
-          <div className="scratch-list">
-            {scratchpad.length === 0 ? (
-              <div style={{ fontSize: '14px', fontStyle: 'italic', color: 'var(--faint)', padding: '8px 4px' }}>
-                No unslotted tasks. Jot above and slot into any block!
-              </div>
-            ) : (
-              scratchpad.map((s) => (
-                <div
-                  key={s.id}
-                  className="scratch-card"
-                  draggable
-                  onDragStart={(e) => handleDragStartScratch(e, s)}
-                >
-                  <span className="drag-handle" title="Drag to block">&#x22ee;&#x22ee;</span>
-                  <span className="title">{s.text}</span>
-                  <div className="scratch-actions">
-                    <select
-                      className="scratch-slot-select"
-                      value=""
-                      onChange={(e) => {
-                        if (e.target.value !== '') {
-                          handleSlotScratchIntoBlock(s.id, parseInt(e.target.value, 10));
-                        }
-                      }}
-                      title="Slot intention into a block"
-                    >
-                      <option value="" disabled>Slot &#x25be;</option>
-                      {blocks.map((b, bIdx) => (
-                        <option key={b.id} value={bIdx}>
-                          Block {bIdx + 1}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="scratch-del"
-                      title="Remove"
-                      onClick={() => handleDelScratch(s.id)}
-                    >
-                      &times;
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
 
-        {/* Timeline Ledger */}
-        <div className="timeline-section">
-          <div className="timeline-toolbar">
-            <div className="timeline-title-wrap">
-              <h2 className="timeline-title">The Six Time Blocks</h2>
-              <span className="timeline-subtitle">
-                Franklin's 24-Hour System ({formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a})
-              </span>
-            </div>
-            <div className="timeline-actions">
-              <button
-                type="button"
-                className="pill-btn hours-btn"
-                onClick={openHoursModal}
-                title="Go back to selecting wake-up and sleep hours"
-              >
-                &#x25f7; Hours: {formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a}
-              </button>
-              <button
-                type="button"
-                className="pill-btn"
-                onClick={handleResetToDefault}
-              >
-                Reset to Franklin 1726
-              </button>
-            </div>
-          </div>
-
-          <div className="timeline-ledger">
-            {computedBlocks.map((item, idx) => {
-              const b = item.block;
-              const isOver = dragOverIdx === idx;
-              const isDraggingThis = draggedItem?.type === 'block' && draggedItem?.index === idx;
-
-              return (
-                <div
-                  key={b.id}
-                  className={`franklin-block ${b.done ? 'done' : ''} ${isOver ? 'drag-over' : ''} ${isDraggingThis ? 'dragging' : ''}`}
-                  draggable
-                  onDragStart={(e) => handleDragStartBlock(e, idx)}
-                  onDragOver={(e) => handleDragOver(e, idx)}
-                  onDragLeave={(e) => handleDragLeave(e, idx)}
-                  onDrop={(e) => handleDrop(e, idx)}
-                >
-                  {/* Left Hour Column */}
-                  <div className="block-hours">
-                    {item.hours.map((h) => {
-                      const o = formatHour(h);
-                      const isNow = h === currentHour;
-                      return (
-                        <div key={h} className={`hour-cell ${isNow ? 'is-now' : ''}`}>
-                          {o.n}<small>{o.a}</small>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Right Content Area */}
-                  <div className="block-content">
-                    <div className="block-header">
-                      <span className="block-grip" title="Drag to reorder block">&#x22ee;&#x22ee;</span>
-                      <input
-                        className="block-title-input"
-                        value={b.title}
-                        onChange={(e) => handleUpdateBlockField(idx, 'title', e.target.value)}
-                        aria-label="Block title"
-                      />
-                      {/* Strictly 2, 3, or 4 hours only */}
-                      <div className="dur-selector" title="Duration: strictly 2h, 3h, or 4h">
-                        {[2, 3, 4].map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            className={`dur-opt ${b.duration === d ? 'active' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSetDuration(idx, d);
-                            }}
-                          >
-                            {d}h
-                          </button>
-                        ))}
-                      </div>
+            {/* Rising Hour Strip */}
+            <div className="scheme-section">
+              <h2 className="scheme-question">I. At what hour dost thou rise?</h2>
+              <p className="scheme-hint">Select the hour of rising, morning meditation, and address to Powerful Goodness</p>
+              <div className="strip-wrap">
+                <div className="strip" role="group" aria-label="Hour of rising">
+                  {[3, 4, 5, 6, 7, 8, 9, 10, 11].map((h) => {
+                    const o = formatHour(h);
+                    const isSel = tempRise === h;
+                    return (
                       <button
+                        key={h}
                         type="button"
-                        className="tick-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleDone(idx);
-                        }}
-                        title="Mark completed"
+                        aria-pressed={isSel}
+                        onClick={() => setTempRise(h)}
                       >
-                        &#x2713;
+                        {o.n}<small>{o.a}</small>
                       </button>
-                    </div>
-
-                    <textarea
-                      className="block-textarea"
-                      rows={2}
-                      value={b.text}
-                      onChange={(e) => handleUpdateBlockField(idx, 'text', e.target.value)}
-                      placeholder="Write plans, projects or thoughts for these hours…"
-                    />
-
-                    {b.tasks && b.tasks.length > 0 && (
-                      <div className="block-tasks">
-                        {b.tasks.map((task, tIdx) => (
-                          <div key={tIdx} className="task-item">
-                            <span className="task-bullet">&#x2014;</span>
-                            <span>{task.text}</span>
-                            <button
-                              type="button"
-                              className="task-del-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteTask(idx, tIdx);
-                              }}
-                            >
-                              &times;
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="drop-zone-hint">&#x2193; Drop intentions or use Slot &#x25be; above</div>
-                  </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-
-            {/* Block 6: Sleep */}
-            <div
-              className="sleep-block"
-              onClick={openHoursModal}
-              title="Click to adjust sleep and wake hours"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') openHoursModal();
-              }}
-            >
-              <div className="sleep-hours">
-                <div>{formatHour(restHour).n}<small>{formatHour(restHour).a}</small></div>
-                <div style={{ fontSize: '14px', color: 'var(--seal)', margin: '2px 0' }}>&#x2193; {sleepDuration}h</div>
-                <div>{formatHour(riseHour).n}<small>{formatHour(riseHour).a}</small></div>
               </div>
-              <div className="sleep-content">
-                <div className="sleep-title">
-                  <span>VI. Sleep</span>
-                  <span className="adjust-hours-pill">✎ Adjust Hours</span>
+            </div>
+
+            {/* Resting Hour Strip */}
+            <div className="scheme-section">
+              <h2 className="scheme-question">II. At what hour dost thou rest?</h2>
+              <p className="scheme-hint">Select the hour of examination, music, and wholesome uninterrupted sleep</p>
+              <div className="strip-wrap">
+                <div className="strip" role="group" aria-label="Hour of rest">
+                  {[20, 21, 22, 23, 24, 25].map((h) => {
+                    const o = formatHour(h);
+                    const isSel = tempRest === h;
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        aria-pressed={isSel}
+                        onClick={() => setTempRest(h)}
+                      >
+                        {o.n}<small>{o.a}</small>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="sleep-sub">&ldquo;Sleep, wholesome and uninterrupted.&rdquo; &bull; {sleepDuration}h repose</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Evening Reflection */}
-        <div className="card-box card-evening">
-          <h2 className="q">The Evening Question</h2>
-          <p className="q-sub">What good have I done today?</p>
-          <textarea
-            className="ans"
-            rows={3}
-            maxLength={200}
-            value={evening}
-            disabled={!eveningUnlocked}
-            onChange={(e) => setEvening(e.target.value)}
-            placeholder={
-              eveningUnlocked
-                ? 'Tonight I examined and accomplished…'
-                : `Opens in the evening block (${formatHour(restHour - 4).n}:00 ${formatHour(restHour - 4).a})`
-            }
-          />
-          {!eveningUnlocked && (
-            <button
-              type="button"
-              className="early-reflect-btn"
-              onClick={() => setForceEvening(true)}
-            >
-              Reflect earlier
-            </button>
-          )}
-          {isSealed && (
-            <div className="seal">
-              Page complete &bull; 1726
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="foot">
-        <span className="progress-stat">{doneCount} of {blocks.length} blocks fulfilled</span>
-        <div className="foot-actions">
-          <button type="button" className="foot-btn" onClick={openHoursModal}>
-            Change Wake &amp; Sleep Hours
-          </button>
-          <button type="button" className="foot-btn" onClick={() => window.print()}>
-            Print Journal
-          </button>
-          <button type="button" className="foot-btn" onClick={handleClearTasks}>
-            Clear Tasks
-          </button>
-        </div>
-      </div>
-
-      {/* Wake-up & Sleep Hours Modal */}
-      {hoursModalOpen && (
-        <div className="modal-overlay" onClick={() => setHoursModalOpen(false)} role="dialog" aria-modal="true">
-          <div className="hours-card" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="auth-close-btn"
-              onClick={() => setHoursModalOpen(false)}
-              title="Return to Journal"
-            >
-              &times;
-            </button>
-
-            <div className="inscription-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
-            <h2 className="inscription-title">The Scheme of the Hours</h2>
-            <p className="inscription-sub">Select the hours of awakening and repose</p>
-
-            {/* Rise Hour */}
-            <h3 className="hours-q">At what hour do you rise?</h3>
-            <p className="hours-helper">Select the hour the quill awakens</p>
-            <div className="strip-wrap">
-              <div className="strip" role="group" aria-label="Hour of rising">
-                {[3, 4, 5, 6, 7, 8, 9, 10, 11].map((h) => {
-                  const o = formatHour(h);
-                  const isSel = tempRise === h;
-                  return (
-                    <button
-                      key={h}
-                      type="button"
-                      aria-pressed={isSel}
-                      onClick={() => setTempRise(h)}
-                    >
-                      {o.n}<small>{o.a}</small>
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
-            {/* Rest Hour */}
-            <h3 className="hours-q">At what hour do you rest?</h3>
-            <p className="hours-helper">Select the hour of sleep and repose</p>
-            <div className="strip-wrap">
-              <div className="strip" role="group" aria-label="Hour of rest">
-                {[20, 21, 22, 23, 24, 25].map((h) => {
-                  const o = formatHour(h);
-                  const isSel = tempRest === h;
-                  return (
-                    <button
-                      key={h}
-                      type="button"
-                      aria-pressed={isSel}
-                      onClick={() => setTempRest(h)}
-                    >
-                      {o.n}<small>{o.a}</small>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Live Balance Summary */}
+            {/* Live Day Division Summary */}
             {(() => {
               const previewSleep = ((tempRise - tempRest) % 24 + 24) % 24 || 7;
               const previewWaking = 24 - previewSleep;
               return (
-                <div className="hours-summary">
-                  {previewWaking} hours of waking endeavor &bull; {previewSleep} hours of wholesome repose
+                <div className="scheme-balance-box">
+                  <div className="scheme-balance-hours">
+                    <strong>{formatHour(tempRise).n}{formatHour(tempRise).a}</strong> Waking &bull;{' '}
+                    <strong>{formatHour(tempRest).n}{formatHour(tempRest).a}</strong> Resting
+                  </div>
+                  <div className="scheme-balance-sub">
+                    {previewWaking} hours of waking endeavor &bull; {previewSleep} hours of wholesome repose
+                  </div>
                 </div>
               );
             })()}
 
-            <div className="hours-actions">
+            {/* Actions to move to Tracker Writing Page */}
+            <div className="scheme-cta-row">
               <button
                 type="button"
-                className="inscription-btn"
-                onClick={handleSaveHours}
+                className="scheme-proceed-btn"
+                onClick={handleApplyHoursAndProceed}
               >
-                Apply Hours &amp; Return
+                Inscribe Scheme &amp; Open Daily Journal &#x2192;
               </button>
               <button
                 type="button"
-                className="foot-btn"
+                className="scheme-reset-link"
                 onClick={handleResetHoursCanonical}
               >
-                Reset to Franklin (5am &ndash; 10pm)
+                Reset to Franklin's 1726 Scheme (5:00 AM &ndash; 10:00 PM)
               </button>
             </div>
           </div>
-        </div>
+        </section>
+      ) : (
+        /* VIEW 2: THE TRACKER WRITING PAGE */
+        <>
+          {/* Header */}
+          <div className="head">
+            <div className="head-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
+            <h1>{displayName ? `${displayName}'s Daily Page` : 'The Daily Page'}</h1>
+            <p className="subtitle">{dateInfo.line} &mdash; page {dateInfo.page} of the year</p>
+            <p className="saying">&ldquo;{dateInfo.saying}&rdquo;</p>
+          </div>
+
+          <div className="layout">
+            {/* Morning Reflection */}
+            <div className="card-box card-morning">
+              <h2 className="q">The Morning Question</h2>
+              <p className="q-sub">What good shall I do this day?</p>
+              <textarea
+                className="ans"
+                rows={3}
+                maxLength={200}
+                value={morning}
+                onChange={(e) => setMorning(e.target.value)}
+                placeholder="Write your morning resolution with the quill…"
+              />
+            </div>
+
+            {/* Quill Scratchpad / Unslotted Intentions */}
+            <div className="card-box scratchpad card-scratch">
+              <div className="scratchpad-header">
+                <h3>Quill Scratchpad</h3>
+                <span className="scratchpad-hint">Daily Intentions</span>
+              </div>
+              <form onSubmit={handleAddScratch} className="scratch-input-row">
+                <input
+                  type="text"
+                  className="scratch-input"
+                  placeholder="Inscribe a duty or intention…"
+                  value={newScratch}
+                  onChange={(e) => setNewScratch(e.target.value)}
+                  maxLength={70}
+                />
+                <button type="submit" className="quill-add-btn" title="Add intention">
+                  + Add
+                </button>
+              </form>
+              <div className="scratch-list">
+                {scratchpad.length === 0 ? (
+                  <div style={{ fontSize: '14px', fontStyle: 'italic', color: 'var(--faint)', padding: '8px 4px' }}>
+                    No unslotted tasks. Jot above and slot into any block!
+                  </div>
+                ) : (
+                  scratchpad.map((s) => (
+                    <div
+                      key={s.id}
+                      className="scratch-card"
+                      draggable
+                      onDragStart={(e) => handleDragStartScratch(e, s)}
+                    >
+                      <span className="drag-handle" title="Drag to block">&#x22ee;&#x22ee;</span>
+                      <span className="title">{s.text}</span>
+                      <div className="scratch-actions">
+                        <select
+                          className="scratch-slot-select"
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value !== '') {
+                              handleSlotScratchIntoBlock(s.id, parseInt(e.target.value, 10));
+                            }
+                          }}
+                          title="Slot intention into a block"
+                        >
+                          <option value="" disabled>Slot &#x25be;</option>
+                          {blocks.map((b, bIdx) => (
+                            <option key={b.id} value={bIdx}>
+                              Block {bIdx + 1}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="scratch-del"
+                          title="Remove"
+                          onClick={() => handleDelScratch(s.id)}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Timeline Ledger */}
+            <div className="timeline-section">
+              <div className="timeline-toolbar">
+                <div className="timeline-title-wrap">
+                  <h2 className="timeline-title">The Six Time Blocks</h2>
+                  <span className="timeline-subtitle">
+                    Franklin's 24-Hour System ({formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a})
+                  </span>
+                </div>
+                <div className="timeline-actions">
+                  <button
+                    type="button"
+                    className="pill-btn hours-btn"
+                    onClick={openSchemePage}
+                    title="Return to the Scheme of the Hours page"
+                  >
+                    &#x25f7; Hours: {formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a}
+                  </button>
+                  <button
+                    type="button"
+                    className="pill-btn"
+                    onClick={handleResetToDefault}
+                  >
+                    Reset to Franklin 1726
+                  </button>
+                </div>
+              </div>
+
+              <div className="timeline-ledger">
+                {computedBlocks.map((item, idx) => {
+                  const b = item.block;
+                  const isOver = dragOverIdx === idx;
+                  const isDraggingThis = draggedItem?.type === 'block' && draggedItem?.index === idx;
+
+                  return (
+                    <div
+                      key={b.id}
+                      className={`franklin-block ${b.done ? 'done' : ''} ${isOver ? 'drag-over' : ''} ${isDraggingThis ? 'dragging' : ''}`}
+                      draggable
+                      onDragStart={(e) => handleDragStartBlock(e, idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDragLeave={(e) => handleDragLeave(e, idx)}
+                      onDrop={(e) => handleDrop(e, idx)}
+                    >
+                      {/* Left Hour Column */}
+                      <div className="block-hours">
+                        {item.hours.map((h) => {
+                          const o = formatHour(h);
+                          const isNow = h === currentHour;
+                          return (
+                            <div key={h} className={`hour-cell ${isNow ? 'is-now' : ''}`}>
+                              {o.n}<small>{o.a}</small>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Right Content Area */}
+                      <div className="block-content">
+                        <div className="block-header">
+                          <span className="block-grip" title="Drag to reorder block">&#x22ee;&#x22ee;</span>
+                          <input
+                            className="block-title-input"
+                            value={b.title}
+                            onChange={(e) => handleUpdateBlockField(idx, 'title', e.target.value)}
+                            aria-label="Block title"
+                          />
+                          {/* Strictly 2, 3, or 4 hours only */}
+                          <div className="dur-selector" title="Duration: strictly 2h, 3h, or 4h">
+                            {[2, 3, 4].map((d) => (
+                              <button
+                                key={d}
+                                type="button"
+                                className={`dur-opt ${b.duration === d ? 'active' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSetDuration(idx, d);
+                                }}
+                              >
+                                {d}h
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            className="tick-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleDone(idx);
+                            }}
+                            title="Mark completed"
+                          >
+                            &#x2713;
+                          </button>
+                        </div>
+
+                        <textarea
+                          className="block-textarea"
+                          rows={2}
+                          value={b.text}
+                          onChange={(e) => handleUpdateBlockField(idx, 'text', e.target.value)}
+                          placeholder="Write plans, projects or thoughts for these hours…"
+                        />
+
+                        {b.tasks && b.tasks.length > 0 && (
+                          <div className="block-tasks">
+                            {b.tasks.map((task, tIdx) => (
+                              <div key={tIdx} className="task-item">
+                                <span className="task-bullet">&#x2014;</span>
+                                <span>{task.text}</span>
+                                <button
+                                  type="button"
+                                  className="task-del-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteTask(idx, tIdx);
+                                  }}
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="drop-zone-hint">&#x2193; Drop intentions or use Slot &#x25be; above</div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Block 6: Sleep */}
+                <div
+                  className="sleep-block"
+                  onClick={openSchemePage}
+                  title="Click to view or adjust the Scheme of the Hours"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') openSchemePage();
+                  }}
+                >
+                  <div className="sleep-hours">
+                    <div>{formatHour(restHour).n}<small>{formatHour(restHour).a}</small></div>
+                    <div style={{ fontSize: '14px', color: 'var(--seal)', margin: '2px 0' }}>&#x2193; {sleepDuration}h</div>
+                    <div>{formatHour(riseHour).n}<small>{formatHour(riseHour).a}</small></div>
+                  </div>
+                  <div className="sleep-content">
+                    <div className="sleep-title">
+                      <span>VI. Sleep</span>
+                      <span className="adjust-hours-pill">&#x25f7; Scheme of Hours</span>
+                    </div>
+                    <div className="sleep-sub">&ldquo;Sleep, wholesome and uninterrupted.&rdquo; &bull; {sleepDuration}h repose</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Evening Reflection */}
+            <div className="card-box card-evening">
+              <h2 className="q">The Evening Question</h2>
+              <p className="q-sub">What good have I done today?</p>
+              <textarea
+                className="ans"
+                rows={3}
+                maxLength={200}
+                value={evening}
+                disabled={!eveningUnlocked}
+                onChange={(e) => setEvening(e.target.value)}
+                placeholder={
+                  eveningUnlocked
+                    ? 'Tonight I examined and accomplished…'
+                    : `Opens in the evening block (${formatHour(restHour - 4).n}:00 ${formatHour(restHour - 4).a})`
+                }
+              />
+              {!eveningUnlocked && (
+                <button
+                  type="button"
+                  className="early-reflect-btn"
+                  onClick={() => setForceEvening(true)}
+                >
+                  Reflect earlier
+                </button>
+              )}
+              {isSealed && (
+                <div className="seal">
+                  Page complete &bull; 1726
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="foot">
+            <span className="progress-stat">{doneCount} of {blocks.length} blocks fulfilled</span>
+            <div className="foot-actions">
+              <button type="button" className="foot-btn" onClick={openSchemePage}>
+                ◷ The Scheme of the Hours
+              </button>
+              <button type="button" className="foot-btn" onClick={() => window.print()}>
+                Print Journal
+              </button>
+              <button type="button" className="foot-btn" onClick={handleClearTasks}>
+                Clear Tasks
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Name Inscription Modal After Signup */}
