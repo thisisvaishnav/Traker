@@ -1,0 +1,710 @@
+:root {
+  --desk: #2b211a;
+  --desk-dark: #17110d;
+  --paper: #e9dcbd;
+  --paper2: #dfce9f;
+  --ink: #1d1812;
+  --faint: #7a6648;
+  --faint-line: rgba(122, 102, 72, 0.35);
+  --seal: #8c2b22;
+  --seal-soft: rgba(140, 43, 34, 0.12);
+  --pen-ink: #1f2a4a;
+  --now: rgba(140, 43, 34, 0.14);
+  --drop-target: rgba(140, 43, 34, 0.18);
+  --card-bg: rgba(246, 237, 214, 0.72);
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--desk);
+  color: var(--ink);
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 19px;
+  line-height: 1.45;
+  padding: 24px 14px 60px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Aged Parchment Page with Historical Texture */
+.page {
+  max-width: 1060px;
+  margin: 0 auto;
+  background:
+    radial-gradient(ellipse at 12% 7%, rgba(160, 115, 45, 0.24), transparent 45%),
+    radial-gradient(ellipse at 92% 65%, rgba(130, 85, 30, 0.22), transparent 50%),
+    radial-gradient(ellipse at 45% 95%, rgba(100, 65, 20, 0.32), transparent 45%),
+    radial-gradient(ellipse at 75% 15%, rgba(170, 125, 55, 0.15), transparent 40%),
+    var(--paper);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65), inset 0 0 85px rgba(85, 55, 18, 0.38);
+  padding: 34px 32px 44px;
+  border-radius: 4px;
+  position: relative;
+  border: 1px solid rgba(100, 70, 25, 0.3);
+}
+
+.page::after {
+  content: "";
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid rgba(122, 102, 72, 0.25);
+  pointer-events: none;
+}
+
+.hand {
+  font-family: "Caveat", "Segoe Script", cursive;
+  font-size: 25px;
+  color: var(--pen-ink);
+  font-weight: 500;
+}
+
+h1, h2, h3, .q {
+  font-family: "IM Fell English", "EB Garamond", Georgia, serif;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* Header */
+.head {
+  text-align: center;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.head-ornament {
+  font-size: 18px;
+  letter-spacing: 6px;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+.head h1 {
+  font-size: 34px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.head .subtitle {
+  margin: 6px 0 0;
+  font-style: italic;
+  font-size: 18px;
+  color: var(--faint);
+}
+.head .saying {
+  margin: 8px 0 0;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 19px;
+  color: var(--ink);
+  border-top: 1px dashed var(--faint-line);
+  padding-top: 8px;
+  max-width: 740px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Two-column Journal Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 880px) {
+  .layout {
+    grid-template-columns: 310px 1fr;
+    gap: 34px;
+    align-items: start;
+  }
+}
+
+/* Left Column: Questions & Quill Scratchpad */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.card-box {
+  background: var(--card-bg);
+  border: 1px solid var(--faint-line);
+  padding: 18px 16px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 20px rgba(120, 80, 30, 0.08);
+  position: relative;
+}
+
+.sidebar h2.q {
+  font-size: 21px;
+  line-height: 1.25;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.q-sub {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--faint);
+  margin-top: -4px;
+  margin-bottom: 8px;
+}
+
+.ans {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  resize: vertical;
+  padding: 6px 0;
+  font-family: "Caveat", cursive;
+  font-size: 23px;
+  color: var(--pen-ink);
+  line-height: 1.35;
+}
+.ans:focus {
+  outline: none;
+  border-bottom: 2px solid var(--seal);
+}
+.ans::placeholder {
+  color: #9b8a6a;
+  font-style: italic;
+}
+.ans:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Quill Scratchpad / Tasks To Slot In */
+.scratchpad {
+  border: 1px dashed var(--faint);
+  background: rgba(255, 255, 255, 0.18);
+  padding: 16px 14px;
+}
+.scratchpad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.scratchpad-header h3 {
+  font-family: "IM Fell English", serif;
+  font-size: 19px;
+  color: var(--ink);
+  margin: 0;
+}
+.scratchpad-hint {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--faint);
+}
+
+.scratch-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.scratch-input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  font-family: "Caveat", cursive;
+  font-size: 21px;
+  color: var(--pen-ink);
+  padding: 4px 2px;
+}
+.scratch-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--seal);
+}
+.quill-add-btn {
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: "EB Garamond", serif;
+  font-size: 17px;
+  padding: 2px 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+.quill-add-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.scratch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px;
+  border-radius: 2px;
+  background: rgba(120, 80, 20, 0.04);
+}
+
+.scratch-card {
+  background: #fdf8eb;
+  border: 1px solid rgba(122, 102, 72, 0.4);
+  padding: 8px 10px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: grab;
+  box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+.scratch-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.12);
+  border-color: var(--seal);
+}
+.drag-handle {
+  color: var(--faint);
+  font-size: 16px;
+  line-height: 1;
+}
+.scratch-card .title {
+  flex: 1;
+  font-family: "Caveat", cursive;
+  font-size: 21px;
+  color: var(--pen-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.scratch-del {
+  background: none;
+  border: 0;
+  color: var(--faint);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.scratch-del:hover {
+  color: var(--seal);
+}
+
+/* Wax Seal & Evening */
+.seal {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--seal);
+  font: 21px "IM Fell English", serif;
+  border: 3px double var(--seal);
+  padding: 6px 18px;
+  width: fit-content;
+  transform: rotate(-3deg);
+  border-radius: 40px;
+  background: rgba(140, 43, 34, 0.07);
+  box-shadow: 1px 2px 6px rgba(140, 43, 34, 0.2);
+}
+
+.early-reflect-btn {
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--faint);
+  color: var(--faint);
+  font-size: 14px;
+  font-style: italic;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+}
+.early-reflect-btn:hover { color: var(--seal); border-color: var(--seal); }
+
+/* Right Column: Timeline Tracker */
+.timeline-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--faint-line);
+}
+.timeline-title {
+  font-family: "IM Fell English", serif;
+  font-size: 22px;
+  margin: 0;
+  color: var(--ink);
+}
+.timeline-subtitle {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--faint);
+  margin-left: 6px;
+}
+.timeline-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pill-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: "EB Garamond", serif;
+  font-size: 15px;
+  font-style: italic;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-radius: 14px;
+  transition: all 0.15s;
+}
+.pill-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Scrollable Timeline Ledger Container */
+.timeline-ledger {
+  border: 2px solid var(--ink);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Franklin Authentic Time Block with Hour Strip */
+.franklin-block {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  border-bottom: 2px solid var(--ink);
+  background: #fdfaf2;
+  position: relative;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.franklin-block:last-child {
+  border-bottom: 0;
+}
+.franklin-block.drag-over {
+  background: var(--drop-target) !important;
+  outline: 2px dashed var(--seal);
+  outline-offset: -3px;
+}
+.franklin-block.dragging {
+  opacity: 0.45;
+}
+
+/* Left Hour Column within the Block */
+.block-hours {
+  border-right: 2px solid var(--ink);
+  background: rgba(246, 237, 214, 0.45);
+  display: flex;
+  flex-direction: column;
+}
+.hour-cell {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: italic 24px "EB Garamond", serif;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(122, 102, 72, 0.4);
+  position: relative;
+  user-select: none;
+}
+.hour-cell:last-child {
+  border-bottom: 0;
+}
+.hour-cell small {
+  font-size: 11px;
+  font-style: normal;
+  color: var(--faint);
+  margin-left: 2px;
+}
+.hour-cell.is-now {
+  background: var(--now);
+  color: var(--seal);
+  font-weight: 700;
+  box-shadow: inset 4px 0 0 var(--seal);
+}
+.hour-cell.is-now::before {
+  content: "\2192";
+  position: absolute;
+  left: 3px;
+  font-size: 14px;
+  color: var(--seal);
+  font-weight: bold;
+}
+
+/* Right Content Area */
+.block-content {
+  padding: 10px 14px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Bracket Header */
+.block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.block-grip {
+  cursor: grab;
+  color: var(--faint);
+  font-size: 17px;
+  line-height: 1;
+  padding: 2px 4px;
+  user-select: none;
+}
+.block-grip:active {
+  cursor: grabbing;
+}
+
+.block-title-input {
+  flex: 1;
+  font: 600 20px "EB Garamond", serif;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid transparent;
+}
+.block-title-input:focus {
+  outline: none;
+  border-bottom: 1px dashed var(--ink);
+}
+
+/* Allowed Durations: Strictly 2, 3, 4 Hours Only */
+.dur-selector {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--ink);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.4);
+}
+.dur-opt {
+  background: none;
+  border: 0;
+  border-right: 1px solid var(--ink);
+  font: italic 13px "EB Garamond", serif;
+  color: var(--ink);
+  padding: 2px 7px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: all 0.15s;
+}
+.dur-opt:last-child {
+  border-right: 0;
+}
+.dur-opt.active {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+.dur-opt:hover:not(.active) {
+  background: rgba(140, 43, 34, 0.1);
+  color: var(--seal);
+}
+
+/* Done Checkmark Button */
+.tick-btn {
+  background: none;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--ink);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  margin-left: 4px;
+}
+.franklin-block.done .tick-btn {
+  background: var(--ink);
+  color: var(--paper);
+}
+.tick-btn:hover {
+  border-color: var(--seal);
+  color: var(--seal);
+}
+.franklin-block.done .tick-btn:hover {
+  background: var(--seal);
+  color: var(--paper);
+}
+
+/* Done Strikethrough */
+.franklin-block.done .block-title-input,
+.franklin-block.done .block-textarea,
+.franklin-block.done .task-item {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--seal);
+  opacity: 0.65;
+}
+
+/* Textarea / Notes */
+.block-textarea {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  resize: vertical;
+  min-height: 48px;
+  padding: 4px 0 0 4px;
+  font-family: "Caveat", cursive;
+  font-size: 22px;
+  color: var(--pen-ink);
+  line-height: 1.35;
+}
+.block-textarea:focus {
+  outline: none;
+}
+.block-textarea::placeholder {
+  color: #a49474;
+}
+
+/* Dropped Tasks List inside Block */
+.block-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "Caveat", cursive;
+  font-size: 21px;
+  color: var(--pen-ink);
+  background: rgba(255, 255, 255, 0.4);
+  padding: 2px 8px;
+  border-radius: 2px;
+  border-left: 2px solid var(--seal);
+}
+.task-bullet {
+  font-size: 14px;
+  color: var(--seal);
+}
+.task-del-btn {
+  background: none;
+  border: 0;
+  color: var(--faint);
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: auto;
+  line-height: 1;
+}
+.task-del-btn:hover {
+  color: var(--seal);
+}
+
+/* Block Drop Hint */
+.drop-zone-hint {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--faint);
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+/* Block 6: Sleep */
+.sleep-block {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  background: rgba(0, 0, 0, 0.06);
+  border-top: 2px solid var(--ink);
+}
+.sleep-hours {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px solid var(--ink);
+  font: italic 22px "EB Garamond", serif;
+  color: var(--faint);
+  padding: 18px 0;
+  text-align: center;
+  line-height: 1.2;
+}
+.sleep-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 20px;
+}
+.sleep-title {
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 24px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.sleep-sub {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--faint);
+}
+
+/* Footer */
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  border-top: 2px solid var(--ink);
+  padding-top: 14px;
+  font-style: italic;
+}
+.foot-actions {
+  display: flex;
+  gap: 16px;
+}
+.foot-btn {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  font: italic 17px "EB Garamond", serif;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+.foot-btn:hover {
+  color: var(--seal);
+  border-color: var(--seal);
+}
+.progress-stat {
+  font-family: "IM Fell English", serif;
+  font-size: 19px;
+  color: var(--ink);
+}
+
+@media (max-width: 600px) {
+  body { padding: 12px 6px 30px; }
+  .page { padding: 20px 14px 28px; }
+  .head h1 { font-size: 26px; }
+  .block-hours { width: 68px; }
+}
