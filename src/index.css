@@ -46,7 +46,7 @@ body {
     radial-gradient(ellipse at 75% 15%, rgba(170, 125, 55, 0.15), transparent 40%),
     var(--paper);
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65), inset 0 0 85px rgba(85, 55, 18, 0.38);
-  padding: 34px 32px 44px;
+  padding: 28px 32px 44px;
   border-radius: 4px;
   position: relative;
   border: 1px solid rgba(100, 70, 25, 0.3);
@@ -58,6 +58,63 @@ body {
   top: 8px; left: 8px; right: 8px; bottom: 8px;
   border: 1px solid rgba(122, 102, 72, 0.25);
   pointer-events: none;
+}
+
+/* Top Ledger / Auth Bar */
+.ledger-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed var(--faint-line);
+  font-size: 15px;
+  font-style: italic;
+  color: var(--faint);
+}
+
+.ledger-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-btn {
+  background: transparent;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: "EB Garamond", serif;
+  font-size: 15px;
+  font-style: italic;
+  padding: 3px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.auth-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.auth-btn.primary {
+  background: rgba(140, 43, 34, 0.1);
+  border-color: var(--seal);
+  color: var(--seal);
+}
+.auth-btn.primary:hover {
+  background: var(--seal);
+  color: var(--paper);
+}
+
+.user-status-text {
+  font-family: "IM Fell English", serif;
+  font-size: 17px;
+  color: var(--ink);
 }
 
 .hand {
@@ -710,9 +767,135 @@ h1, h2, h3, .q {
   color: var(--ink);
 }
 
+/* Vintage Modal Backdrop & Parchment Inscription Card */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 17, 13, 0.78);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.inscription-card {
+  max-width: 480px;
+  width: 100%;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(160, 115, 45, 0.24), transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(130, 85, 30, 0.25), transparent 50%),
+    var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  padding: 32px 28px 28px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.75), inset 0 0 65px rgba(85, 55, 18, 0.3);
+  position: relative;
+  text-align: center;
+}
+
+.inscription-card::after {
+  content: "";
+  position: absolute;
+  top: 6px; left: 6px; right: 6px; bottom: 6px;
+  border: 1px solid rgba(122, 102, 72, 0.35);
+  pointer-events: none;
+}
+
+.inscription-ornament {
+  font-size: 16px;
+  letter-spacing: 5px;
+  color: var(--faint);
+  margin-bottom: 6px;
+}
+
+.inscription-title {
+  font-family: "IM Fell English", serif;
+  font-size: 26px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.inscription-sub {
+  font-style: italic;
+  font-size: 17px;
+  color: var(--faint);
+  margin-bottom: 20px;
+}
+
+.inscription-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid var(--ink);
+  font-family: "Caveat", cursive;
+  font-size: 28px;
+  color: var(--pen-ink);
+  text-align: center;
+  padding: 6px 4px;
+  margin-bottom: 24px;
+}
+.inscription-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--seal);
+}
+
+.inscription-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  font-family: "EB Garamond", serif;
+  font-style: italic;
+  font-size: 18px;
+  padding: 8px 24px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.inscription-btn:hover {
+  background: var(--seal);
+  border-color: var(--seal);
+  color: #fff;
+}
+
+.auth-modal-content {
+  position: relative;
+  animation: fadeIn 0.2s ease;
+}
+.auth-close-btn {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1010;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.auth-close-btn:hover {
+  background: var(--seal);
+  color: #fff;
+}
+
 @media (max-width: 600px) {
   body { padding: 12px 6px 30px; }
   .page { padding: 20px 14px 28px; }
   .head h1 { font-size: 26px; }
   .block-hours { width: 68px; }
+  .ledger-top-bar { flex-direction: column; gap: 8px; align-items: flex-start; }
 }

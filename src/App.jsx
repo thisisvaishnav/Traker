@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useUser, useClerk, Show, SignIn, SignUp, UserButton } from '@clerk/react';
+import { clerkParchmentTheme } from './clerkTheme';
 
-const STORAGE_KEY = 'franklin_six_blocks_v3';
+const GUEST_KEY = 'franklin_six_blocks_v3';
 
 const SAYINGS = [
   'Diligence is the mother of good luck.',
@@ -103,6 +105,7 @@ function formatHour(h) {
 }
 
 export default function App() {
+  const { user, isLoaded: userLoaded, isSignedIn } = useUser();
   const [dateInfo] = useState(getDateInfo);
   const [morning, setMorning] = useState('Resolve to act with diligence and justice in all things.');
   const [evening, setEvening] = useState('');
@@ -117,43 +120,67 @@ export default function App() {
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
 
-  // Initialize and load saved state
+  // Auth UI state
+  const [authModal, setAuthModal] = useState(null); // 'signin' | 'signup' | null
+  const [nameModalOpen, setNameModalOpen] = useState(false);
+  const [inscribedName, setInscribedName] = useState('');
+  const [isSubmittingName, setIsSubmittingName] = useState(false);
+
+  // Storage key based on user ID for persistent per-user data
+  const storageKey = isSignedIn && user ? `franklin_user_${user.id}_${todayKey()}` : `${GUEST_KEY}_${todayKey()}`;
+
+  // Check if user needs to be asked for name after signup
+  useEffect(() => {
+    if (userLoaded && isSignedIn && user) {
+      const hasName = user.firstName || user.unsafeMetadata?.ledgerName;
+      if (!hasName) {
+        setNameModalOpen(true);
+      } else {
+        setInscribedName(user.firstName || user.unsafeMetadata?.ledgerName || '');
+      }
+    }
+  }, [userLoaded, isSignedIn, user]);
+
+  // Load saved state for the current user
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(storageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed.date === todayKey()) {
-          if (parsed.morning !== undefined) setMorning(parsed.morning);
-          if (parsed.evening !== undefined) setEvening(parsed.evening);
-          if (parsed.forceEvening !== undefined) setForceEvening(parsed.forceEvening);
-          if (parsed.scratchpad) setScratchpad(parsed.scratchpad);
-          if (parsed.blocks) setBlocks(parsed.blocks);
-        }
+        if (parsed.morning !== undefined) setMorning(parsed.morning);
+        if (parsed.evening !== undefined) setEvening(parsed.evening);
+        if (parsed.forceEvening !== undefined) setForceEvening(parsed.forceEvening);
+        if (parsed.scratchpad) setScratchpad(parsed.scratchpad);
+        if (parsed.blocks) setBlocks(parsed.blocks);
+      } else {
+        // Reset to initial canonical state for a fresh day/user
+        setBlocks(INITIAL_CANONICAL_BLOCKS);
+        setEvening('');
       }
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [storageKey]);
 
-  // Auto-save on changes
+  // Auto-save on state changes
   useEffect(() => {
     try {
       localStorage.setItem(
-        STORAGE_KEY,
+        storageKey,
         JSON.stringify({
           date: todayKey(),
           morning,
           evening,
           forceEvening,
           scratchpad,
-          blocks
+          blocks,
+          updatedAt: new Date().toISOString()
         })
       );
     } catch (e) {
       console.error(e);
     }
-  }, [morning, evening, forceEvening, scratchpad, blocks]);
+  }, [morning, evening, forceEvening, scratchpad, blocks, storageKey]);
 
   const currentHour = new Date().getHours();
   const eveningUnlocked = forceEvening || currentHour >= 18 || currentHour < 5;
@@ -178,6 +205,32 @@ export default function App() {
   });
 
   const doneCount = blocks.filter((b) => b.done).length;
+
+  // Name submission after signup
+  const handleSaveName = async (e) => {
+    e?.preventDefault();
+    const clean = inscribedName.trim();
+    if (!clean) return;
+    setIsSubmittingName(true);
+    try {
+      if (user) {
+        await user.update({
+          firstName: clean,
+          unsafeMetadata: {
+            ...user.unsafeMetadata,
+            ledgerName: clean
+          }
+        });
+      }
+      setNameModalOpen(false);
+    } catch (err) {
+      console.error('Error updating name:', err);
+      // Fallback local state
+      setNameModalOpen(false);
+    } finally {
+      setIsSubmittingName(false);
+    }
+  };
 
   // Actions
   const handleAddScratch = (e) => {
@@ -300,12 +353,55 @@ export default function App() {
     setDraggedItem(null);
   };
 
+  const displayName = isSignedIn && user ? (user.firstName || user.unsafeMetadata?.ledgerName || 'Friend') : null;
+
   return (
     <main className="page" role="main">
+      {/* Top Ledger & Auth Bar */}
+      <div className="ledger-top-bar">
+        <div className="ledger-top-left">
+          {isSignedIn ? (
+            <span className="user-status-text">
+              &#x270e; The Annals of <strong>{displayName}</strong>
+            </span>
+          ) : (
+            <span className="user-status-text">&#x270e; Guest Annals (Local)</span>
+          )}
+        </div>
+
+        <div className="ledger-top-right">
+          {isSignedIn ? (
+            <>
+              <span style={{ fontStyle: 'italic', fontSize: '14px', color: 'var(--seal)' }}>
+                &bull; Inscribed &amp; Saved
+              </span>
+              <UserButton appearance={clerkParchmentTheme} />
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="auth-btn"
+                onClick={() => setAuthModal('signin')}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                className="auth-btn primary"
+                onClick={() => setAuthModal('signup')}
+              >
+                Sign Up
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Header */}
       <div className="head">
         <div className="head-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
-        <h1>The Daily Page</h1>
+        <h1>{displayName ? `${displayName}'s Daily Page` : 'The Daily Page'}</h1>
         <p className="subtitle">{dateInfo.line} &mdash; page {dateInfo.page} of the year</p>
         <p className="saying">&ldquo;{dateInfo.saying}&rdquo;</p>
       </div>
@@ -556,6 +652,71 @@ export default function App() {
           </button>
         </div>
       </div>
+
+      {/* Name Inscription Modal After Signup */}
+      {nameModalOpen && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="inscription-card">
+            <div className="inscription-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
+            <h2 className="inscription-title">Inscribe Thy Name</h2>
+            <p className="inscription-sub">
+              By what name shalt thou be known in these daily annals?
+            </p>
+            <form onSubmit={handleSaveName}>
+              <input
+                type="text"
+                className="inscription-input"
+                autoFocus
+                placeholder="e.g. Benjamin, Abigail…"
+                value={inscribedName}
+                onChange={(e) => setInscribedName(e.target.value)}
+                maxLength={40}
+                required
+              />
+              <div>
+                <button
+                  type="submit"
+                  className="inscription-btn"
+                  disabled={isSubmittingName || !inscribedName.trim()}
+                >
+                  {isSubmittingName ? 'Inscribing…' : 'Inscribe in Ledger'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Clerk Auth Modal (Sign In / Sign Up) in 1726 Parchment Theme */}
+      {authModal && (
+        <div className="modal-overlay" onClick={() => setAuthModal(null)}>
+          <div className="auth-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="auth-close-btn"
+              onClick={() => setAuthModal(null)}
+              title="Close"
+            >
+              &times;
+            </button>
+            {authModal === 'signin' ? (
+              <SignIn
+                appearance={clerkParchmentTheme}
+                routing="hash"
+                afterSignInUrl="/"
+                signUpUrl="#signup"
+              />
+            ) : (
+              <SignUp
+                appearance={clerkParchmentTheme}
+                routing="hash"
+                afterSignUpUrl="/"
+                signInUrl="#signin"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
