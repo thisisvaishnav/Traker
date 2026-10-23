@@ -120,6 +120,13 @@ export default function App() {
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
 
+  // Wake-up and Sleep Hour State
+  const [riseHour, setRiseHour] = useState(5); // default 5:00 AM
+  const [restHour, setRestHour] = useState(22); // default 10:00 PM
+  const [hoursModalOpen, setHoursModalOpen] = useState(false);
+  const [tempRise, setTempRise] = useState(5);
+  const [tempRest, setTempRest] = useState(22);
+
   // Auth UI state
   const [authModal, setAuthModal] = useState(null); // 'signin' | 'signup' | null
   const [nameModalOpen, setNameModalOpen] = useState(false);
@@ -157,10 +164,14 @@ export default function App() {
         if (parsed.forceEvening !== undefined) setForceEvening(parsed.forceEvening);
         if (parsed.scratchpad) setScratchpad(parsed.scratchpad);
         if (parsed.blocks) setBlocks(parsed.blocks);
+        if (parsed.riseHour !== undefined) setRiseHour(parsed.riseHour);
+        if (parsed.restHour !== undefined) setRestHour(parsed.restHour);
       } else {
         // Reset to initial canonical state for a fresh day/user
         setBlocks(INITIAL_CANONICAL_BLOCKS);
         setEvening('');
+        setRiseHour(5);
+        setRestHour(22);
       }
     } catch (e) {
       console.error(e);
@@ -179,20 +190,25 @@ export default function App() {
           forceEvening,
           scratchpad,
           blocks,
+          riseHour,
+          restHour,
           updatedAt: new Date().toISOString()
         })
       );
     } catch (e) {
       console.error(e);
     }
-  }, [morning, evening, forceEvening, scratchpad, blocks, storageKey]);
+  }, [morning, evening, forceEvening, scratchpad, blocks, riseHour, restHour, storageKey]);
 
   const currentHour = new Date().getHours();
-  const eveningUnlocked = forceEvening || currentHour >= 18 || currentHour < 5;
+  const eveningUnlocked = forceEvening || currentHour >= (restHour - 4) || currentHour < riseHour;
   const isSealed = evening.trim().length > 0;
 
-  // Compute start hours and hour slots for each block dynamically
-  let curHour = 5; // Franklin starts at 5:00 AM
+  // Sleep duration
+  const sleepDuration = ((riseHour - restHour) % 24 + 24) % 24 || 7;
+
+  // Compute start hours and hour slots for each waking block dynamically starting from riseHour
+  let curHour = riseHour;
   const computedBlocks = blocks.map((b) => {
     const start = curHour;
     const dur = [2, 3, 4].includes(b.duration) ? b.duration : 3;
@@ -210,6 +226,25 @@ export default function App() {
   });
 
   const doneCount = blocks.filter((b) => b.done).length;
+
+  // Open hours configuration modal
+  const openHoursModal = () => {
+    setTempRise(riseHour);
+    setTempRest(restHour);
+    setHoursModalOpen(true);
+  };
+
+  const handleSaveHours = (e) => {
+    e?.preventDefault();
+    setRiseHour(tempRise);
+    setRestHour(tempRest);
+    setHoursModalOpen(false);
+  };
+
+  const handleResetHoursCanonical = () => {
+    setTempRise(5);
+    setTempRest(22);
+  };
 
   // Name submission handler (updates Clerk user profile + unsafeMetadata)
   const saveNameToClerk = async (nameStr) => {
@@ -298,8 +333,10 @@ export default function App() {
   };
 
   const handleResetToDefault = () => {
-    if (window.confirm("Reset blocks to Franklin's canonical 1726 scheme (3h, 4h, 2h, 4h, 4h)?")) {
+    if (window.confirm("Reset blocks to Franklin's canonical 1726 scheme (3h, 4h, 2h, 4h, 4h and 5am – 10pm)?")) {
       setBlocks(JSON.parse(JSON.stringify(INITIAL_CANONICAL_BLOCKS)));
+      setRiseHour(5);
+      setRestHour(22);
     }
   };
 
@@ -542,7 +579,7 @@ export default function App() {
               placeholder={
                 eveningUnlocked
                   ? 'Tonight I examined and accomplished…'
-                  : 'Opens in the evening block (6:00 PM)'
+                  : `Opens in the evening block (${formatHour(restHour - 4).n}:00 ${formatHour(restHour - 4).a})`
               }
             />
             {!eveningUnlocked && (
@@ -567,9 +604,19 @@ export default function App() {
           <div className="timeline-toolbar">
             <div>
               <h2 className="timeline-title">The Six Time Blocks</h2>
-              <span className="timeline-subtitle">Franklin's 24-Hour System (3h, 4h, 2h, 4h, 4h &amp; 7h Sleep)</span>
+              <span className="timeline-subtitle">
+                Franklin's 24-Hour System ({formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a})
+              </span>
             </div>
             <div className="timeline-actions">
+              <button
+                type="button"
+                className="pill-btn hours-btn"
+                onClick={openHoursModal}
+                title="Go back to selecting wake-up and sleep hours"
+              >
+                &#x25f7; Hours: {formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a}
+              </button>
               <button
                 type="button"
                 className="pill-btn"
@@ -684,15 +731,23 @@ export default function App() {
             })}
 
             {/* Block 6: Sleep */}
-            <div className="sleep-block">
+            <div
+              className="sleep-block"
+              onClick={openHoursModal}
+              title="Click to adjust sleep and wake hours"
+              style={{ cursor: 'pointer' }}
+            >
               <div className="sleep-hours">
-                <div>10<small>pm</small></div>
-                <div style={{ fontSize: '14px', color: 'var(--faint)', margin: '2px 0' }}>&#x2193; 7h</div>
-                <div>5<small>am</small></div>
+                <div>{formatHour(restHour).n}<small>{formatHour(restHour).a}</small></div>
+                <div style={{ fontSize: '14px', color: 'var(--seal)', margin: '2px 0' }}>&#x2193; {sleepDuration}h</div>
+                <div>{formatHour(riseHour).n}<small>{formatHour(riseHour).a}</small></div>
               </div>
               <div className="sleep-content">
-                <div className="sleep-title">VI. Sleep</div>
-                <div className="sleep-sub">&ldquo;Sleep, wholesome and uninterrupted.&rdquo;</div>
+                <div className="sleep-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>VI. Sleep</span>
+                  <span style={{ fontSize: '13px', fontStyle: 'italic', color: 'var(--seal)' }}>✎ Adjust Hours</span>
+                </div>
+                <div className="sleep-sub">&ldquo;Sleep, wholesome and uninterrupted.&rdquo; &bull; {sleepDuration} hours repose</div>
               </div>
             </div>
           </div>
@@ -703,6 +758,9 @@ export default function App() {
       <div className="foot">
         <span className="progress-stat">{doneCount} of {blocks.length} blocks fulfilled</span>
         <div className="foot-actions">
+          <button type="button" className="foot-btn" onClick={openHoursModal}>
+            Change Wake &amp; Sleep Hours
+          </button>
           <button type="button" className="foot-btn" onClick={() => window.print()}>
             Print Journal
           </button>
@@ -711,6 +769,98 @@ export default function App() {
           </button>
         </div>
       </div>
+
+      {/* Wake-up & Sleep Hours Modal */}
+      {hoursModalOpen && (
+        <div className="modal-overlay" onClick={() => setHoursModalOpen(false)} role="dialog" aria-modal="true">
+          <div className="hours-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="auth-close-btn"
+              onClick={() => setHoursModalOpen(false)}
+              title="Return to Journal"
+            >
+              &times;
+            </button>
+
+            <div className="inscription-ornament">&#x25c6; &#x25c6; &#x25c6;</div>
+            <h2 className="inscription-title">The Scheme of the Hours</h2>
+            <p className="inscription-sub">Select the hours of awakening and repose</p>
+
+            {/* Rise Hour */}
+            <h3 className="hours-q">At what hour do you rise?</h3>
+            <p className="hours-helper">Select the hour the quill awakens</p>
+            <div className="strip-wrap">
+              <div className="strip" role="group" aria-label="Hour of rising">
+                {[3, 4, 5, 6, 7, 8, 9, 10, 11].map((h) => {
+                  const o = formatHour(h);
+                  const isSel = tempRise === h;
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      aria-pressed={isSel}
+                      onClick={() => setTempRise(h)}
+                    >
+                      {o.n}<small>{o.a}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Rest Hour */}
+            <h3 className="hours-q">At what hour do you rest?</h3>
+            <p className="hours-helper">Select the hour of sleep and repose</p>
+            <div className="strip-wrap">
+              <div className="strip" role="group" aria-label="Hour of rest">
+                {[20, 21, 22, 23, 24, 25].map((h) => {
+                  const o = formatHour(h);
+                  const isSel = tempRest === h;
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      aria-pressed={isSel}
+                      onClick={() => setTempRest(h)}
+                    >
+                      {o.n}<small>{o.a}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live Balance Summary */}
+            {(() => {
+              const previewSleep = ((tempRise - tempRest) % 24 + 24) % 24 || 7;
+              const previewWaking = 24 - previewSleep;
+              return (
+                <div className="hours-summary">
+                  {previewWaking} hours of waking endeavor &bull; {previewSleep} hours of wholesome repose
+                </div>
+              );
+            })()}
+
+            <div className="hours-actions">
+              <button
+                type="button"
+                className="inscription-btn"
+                onClick={handleSaveHours}
+              >
+                Apply Hours &amp; Return
+              </button>
+              <button
+                type="button"
+                className="foot-btn"
+                onClick={handleResetHoursCanonical}
+              >
+                Reset to Franklin (5am &ndash; 10pm)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Name Inscription Modal After Signup */}
       {nameModalOpen && (
