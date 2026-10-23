@@ -126,17 +126,22 @@ export default function App() {
   const [inscribedName, setInscribedName] = useState('');
   const [isSubmittingName, setIsSubmittingName] = useState(false);
 
+  // Top-left inline name edit state
+  const [isEditingTopName, setIsEditingTopName] = useState(false);
+  const [topNameInput, setTopNameInput] = useState('');
+
   // Storage key based on user ID for persistent per-user data
   const storageKey = isSignedIn && user ? `franklin_user_${user.id}_${todayKey()}` : `${GUEST_KEY}_${todayKey()}`;
 
   // Check if user needs to be asked for name after signup
   useEffect(() => {
     if (userLoaded && isSignedIn && user) {
-      const hasName = user.firstName || user.unsafeMetadata?.ledgerName;
-      if (!hasName) {
+      const existing = user.firstName || user.unsafeMetadata?.ledgerName;
+      if (!existing) {
         setNameModalOpen(true);
       } else {
-        setInscribedName(user.firstName || user.unsafeMetadata?.ledgerName || '');
+        setInscribedName(existing);
+        setTopNameInput(existing);
       }
     }
   }, [userLoaded, isSignedIn, user]);
@@ -206,10 +211,9 @@ export default function App() {
 
   const doneCount = blocks.filter((b) => b.done).length;
 
-  // Name submission after signup
-  const handleSaveName = async (e) => {
-    e?.preventDefault();
-    const clean = inscribedName.trim();
+  // Name submission handler (updates Clerk user profile + unsafeMetadata)
+  const saveNameToClerk = async (nameStr) => {
+    const clean = nameStr.trim();
     if (!clean) return;
     setIsSubmittingName(true);
     try {
@@ -222,13 +226,27 @@ export default function App() {
           }
         });
       }
+      setInscribedName(clean);
+      setTopNameInput(clean);
       setNameModalOpen(false);
+      setIsEditingTopName(false);
     } catch (err) {
       console.error('Error updating name:', err);
       setNameModalOpen(false);
+      setIsEditingTopName(false);
     } finally {
       setIsSubmittingName(false);
     }
+  };
+
+  const handleSaveNameModal = async (e) => {
+    e?.preventDefault();
+    await saveNameToClerk(inscribedName);
+  };
+
+  const handleSaveTopName = async (e) => {
+    e?.preventDefault();
+    await saveNameToClerk(topNameInput);
   };
 
   // Actions
@@ -360,9 +378,51 @@ export default function App() {
       <div className="ledger-top-bar">
         <div className="ledger-top-left">
           {isSignedIn ? (
-            <span className="user-status-text">
-              &#x270e; The Annals of <strong>{displayName}</strong>
-            </span>
+            isEditingTopName ? (
+              <form className="inline-name-form" onSubmit={handleSaveTopName}>
+                <span className="user-status-text">&#x270e; The Annals of</span>
+                <input
+                  type="text"
+                  className="inline-name-input"
+                  autoFocus
+                  maxLength={40}
+                  value={topNameInput}
+                  onChange={(e) => setTopNameInput(e.target.value)}
+                  placeholder="Enter name…"
+                />
+                <button
+                  type="submit"
+                  className="inline-name-save"
+                  disabled={isSubmittingName || !topNameInput.trim()}
+                >
+                  {isSubmittingName ? 'Saving…' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  className="inline-name-cancel"
+                  onClick={() => {
+                    setIsEditingTopName(false);
+                    setTopNameInput(displayName || '');
+                  }}
+                  title="Cancel"
+                >
+                  &times;
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="name-editor-btn"
+                onClick={() => {
+                  setTopNameInput(displayName || '');
+                  setIsEditingTopName(true);
+                }}
+                title="Click to change thy name in the ledger"
+              >
+                &#x270e; The Annals of <strong>{displayName}</strong>
+                <span className="name-edit-icon" aria-hidden="true">&#x270d;&#xfe0e;</span>
+              </button>
+            )
           ) : (
             <span className="user-status-text">&#x270e; Guest Annals (Local)</span>
           )}
@@ -661,7 +721,7 @@ export default function App() {
             <p className="inscription-sub">
               By what name shalt thou be known in these daily annals?
             </p>
-            <form onSubmit={handleSaveName}>
+            <form onSubmit={handleSaveNameModal}>
               <input
                 type="text"
                 className="inscription-input"

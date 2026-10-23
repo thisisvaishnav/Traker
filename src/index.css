@@ -77,6 +77,86 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.name-editor-btn {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed var(--faint);
+  color: var(--ink);
+  font-family: "IM Fell English", serif;
+  font-size: 17px;
+  padding: 1px 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  border-radius: 2px;
+}
+
+.name-editor-btn:hover {
+  color: var(--seal);
+  border-bottom: 1px solid var(--seal);
+  background: rgba(140, 43, 34, 0.05);
+}
+
+.name-edit-icon {
+  font-size: 13px;
+  color: var(--faint);
+  opacity: 0.7;
+  font-style: normal;
+}
+.name-editor-btn:hover .name-edit-icon {
+  color: var(--seal);
+  opacity: 1;
+}
+
+.inline-name-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.inline-name-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid var(--seal);
+  font-family: "Caveat", cursive;
+  font-size: 22px;
+  color: var(--pen-ink);
+  padding: 1px 4px;
+  outline: none;
+  min-width: 140px;
+}
+
+.inline-name-save {
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  font-family: "EB Garamond", serif;
+  font-size: 13px;
+  font-style: italic;
+  padding: 1px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.inline-name-save:hover {
+  background: var(--seal);
+  border-color: var(--seal);
+}
+
+.inline-name-cancel {
+  background: transparent;
+  color: var(--faint);
+  border: 0;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.inline-name-cancel:hover {
+  color: var(--seal);
 }
 
 .ledger-top-right {
