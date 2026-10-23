@@ -225,7 +225,6 @@ export default function App() {
       setNameModalOpen(false);
     } catch (err) {
       console.error('Error updating name:', err);
-      // Fallback local state
       setNameModalOpen(false);
     } finally {
       setIsSubmittingName(false);
@@ -694,7 +693,10 @@ export default function App() {
             <button
               type="button"
               className="auth-close-btn"
-              onClick={() => setAuthModal(null)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setAuthModal(null);
+              }}
               title="Close"
             >
               &times;
