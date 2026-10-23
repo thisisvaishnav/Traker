@@ -297,6 +297,18 @@ export default function App() {
     setScratchpad((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const handleSlotScratchIntoBlock = (scratchId, targetIdx) => {
+    const item = scratchpad.find((s) => s.id === scratchId);
+    if (!item) return;
+    setBlocks((prev) => {
+      const copy = [...prev];
+      const tasks = [...(copy[targetIdx].tasks || []), { text: item.text }];
+      copy[targetIdx] = { ...copy[targetIdx], tasks };
+      return copy;
+    });
+    setScratchpad((prev) => prev.filter((s) => s.id !== scratchId));
+  };
+
   const handleUpdateBlockField = (idx, field, val) => {
     setBlocks((prev) => {
       const copy = [...prev];
@@ -468,7 +480,7 @@ export default function App() {
         <div className="ledger-top-right">
           {isSignedIn ? (
             <>
-              <span style={{ fontStyle: 'italic', fontSize: '14px', color: 'var(--seal)' }}>
+              <span className="inscribed-saved-badge">
                 &bull; Inscribed &amp; Saved
               </span>
               <UserButton appearance={clerkParchmentTheme} />
@@ -503,54 +515,72 @@ export default function App() {
       </div>
 
       <div className="layout">
-        {/* Left Column / Sidebar */}
-        <div className="sidebar">
-          {/* Morning Reflection */}
-          <div className="card-box">
-            <h2 className="q">The Morning Question</h2>
-            <p className="q-sub">What good shall I do this day?</p>
-            <textarea
-              className="ans"
-              rows={2}
-              maxLength={160}
-              value={morning}
-              onChange={(e) => setMorning(e.target.value)}
-              placeholder="Today I will…"
-            />
-          </div>
+        {/* Morning Reflection */}
+        <div className="card-box card-morning">
+          <h2 className="q">The Morning Question</h2>
+          <p className="q-sub">What good shall I do this day?</p>
+          <textarea
+            className="ans"
+            rows={2}
+            maxLength={160}
+            value={morning}
+            onChange={(e) => setMorning(e.target.value)}
+            placeholder="Today I will…"
+          />
+        </div>
 
-          {/* Quill Scratchpad */}
-          <div className="scratchpad card-box">
-            <div className="scratchpad-header">
+        {/* Quill Scratchpad */}
+        <div className="scratchpad card-box card-scratch">
+          <div className="scratchpad-header">
+            <div>
               <h3>Quill Scratchpad</h3>
-              <span className="scratchpad-hint">Drag into any block</span>
+              <span className="scratchpad-hint">Drag into block or tap Slot &#x25be;</span>
             </div>
-            <form className="scratch-input-row" onSubmit={handleAddScratch}>
-              <input
-                type="text"
-                className="scratch-input"
-                placeholder="Jot an intention…"
-                maxLength={80}
-                value={newScratch}
-                onChange={(e) => setNewScratch(e.target.value)}
-              />
-              <button type="submit" className="quill-add-btn">Jot</button>
-            </form>
-            <div className="scratch-list">
-              {scratchpad.length === 0 ? (
-                <div style={{ fontSize: '14px', fontStyle: 'italic', color: 'var(--faint)', padding: '8px 4px' }}>
-                  No unslotted tasks. Jot above and drag into any block!
-                </div>
-              ) : (
-                scratchpad.map((s) => (
-                  <div
-                    key={s.id}
-                    className="scratch-card"
-                    draggable
-                    onDragStart={(e) => handleDragStartScratch(e, s)}
-                  >
-                    <span className="drag-handle">&#x22ee;&#x22ee;</span>
-                    <span className="title">{s.text}</span>
+          </div>
+          <form className="scratch-input-row" onSubmit={handleAddScratch}>
+            <input
+              type="text"
+              className="scratch-input"
+              placeholder="Jot an intention…"
+              maxLength={80}
+              value={newScratch}
+              onChange={(e) => setNewScratch(e.target.value)}
+            />
+            <button type="submit" className="quill-add-btn">Jot</button>
+          </form>
+          <div className="scratch-list">
+            {scratchpad.length === 0 ? (
+              <div style={{ fontSize: '14px', fontStyle: 'italic', color: 'var(--faint)', padding: '8px 4px' }}>
+                No unslotted tasks. Jot above and slot into any block!
+              </div>
+            ) : (
+              scratchpad.map((s) => (
+                <div
+                  key={s.id}
+                  className="scratch-card"
+                  draggable
+                  onDragStart={(e) => handleDragStartScratch(e, s)}
+                >
+                  <span className="drag-handle" title="Drag to block">&#x22ee;&#x22ee;</span>
+                  <span className="title">{s.text}</span>
+                  <div className="scratch-actions">
+                    <select
+                      className="scratch-slot-select"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value !== '') {
+                          handleSlotScratchIntoBlock(s.id, parseInt(e.target.value, 10));
+                        }
+                      }}
+                      title="Slot intention into a block"
+                    >
+                      <option value="" disabled>Slot &#x25be;</option>
+                      {blocks.map((b, bIdx) => (
+                        <option key={b.id} value={bIdx}>
+                          Block {bIdx + 1}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       type="button"
                       className="scratch-del"
@@ -560,49 +590,16 @@ export default function App() {
                       &times;
                     </button>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Evening Reflection */}
-          <div className="card-box">
-            <h2 className="q">The Evening Question</h2>
-            <p className="q-sub">What good have I done today?</p>
-            <textarea
-              className="ans"
-              rows={3}
-              maxLength={200}
-              value={evening}
-              disabled={!eveningUnlocked}
-              onChange={(e) => setEvening(e.target.value)}
-              placeholder={
-                eveningUnlocked
-                  ? 'Tonight I examined and accomplished…'
-                  : `Opens in the evening block (${formatHour(restHour - 4).n}:00 ${formatHour(restHour - 4).a})`
-              }
-            />
-            {!eveningUnlocked && (
-              <button
-                type="button"
-                className="early-reflect-btn"
-                onClick={() => setForceEvening(true)}
-              >
-                Reflect earlier
-              </button>
-            )}
-            {isSealed && (
-              <div className="seal">
-                Page complete &bull; 1726
-              </div>
+                </div>
+              ))
             )}
           </div>
         </div>
 
-        {/* Right Column: Timeline Ledger */}
+        {/* Timeline Ledger */}
         <div className="timeline-section">
           <div className="timeline-toolbar">
-            <div>
+            <div className="timeline-title-wrap">
               <h2 className="timeline-title">The Six Time Blocks</h2>
               <span className="timeline-subtitle">
                 Franklin's 24-Hour System ({formatHour(riseHour).n}{formatHour(riseHour).a} &ndash; {formatHour(restHour).n}{formatHour(restHour).a})
@@ -724,7 +721,7 @@ export default function App() {
                       </div>
                     )}
 
-                    <div className="drop-zone-hint">&#x2193; Drop intentions from Quill Scratchpad into this block</div>
+                    <div className="drop-zone-hint">&#x2193; Drop intentions or use Slot &#x25be; above</div>
                   </div>
                 </div>
               );
@@ -735,7 +732,11 @@ export default function App() {
               className="sleep-block"
               onClick={openHoursModal}
               title="Click to adjust sleep and wake hours"
-              style={{ cursor: 'pointer' }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') openHoursModal();
+              }}
             >
               <div className="sleep-hours">
                 <div>{formatHour(restHour).n}<small>{formatHour(restHour).a}</small></div>
@@ -743,14 +744,47 @@ export default function App() {
                 <div>{formatHour(riseHour).n}<small>{formatHour(riseHour).a}</small></div>
               </div>
               <div className="sleep-content">
-                <div className="sleep-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="sleep-title">
                   <span>VI. Sleep</span>
-                  <span style={{ fontSize: '13px', fontStyle: 'italic', color: 'var(--seal)' }}>✎ Adjust Hours</span>
+                  <span className="adjust-hours-pill">✎ Adjust Hours</span>
                 </div>
-                <div className="sleep-sub">&ldquo;Sleep, wholesome and uninterrupted.&rdquo; &bull; {sleepDuration} hours repose</div>
+                <div className="sleep-sub">&ldquo;Sleep, wholesome and uninterrupted.&rdquo; &bull; {sleepDuration}h repose</div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Evening Reflection */}
+        <div className="card-box card-evening">
+          <h2 className="q">The Evening Question</h2>
+          <p className="q-sub">What good have I done today?</p>
+          <textarea
+            className="ans"
+            rows={3}
+            maxLength={200}
+            value={evening}
+            disabled={!eveningUnlocked}
+            onChange={(e) => setEvening(e.target.value)}
+            placeholder={
+              eveningUnlocked
+                ? 'Tonight I examined and accomplished…'
+                : `Opens in the evening block (${formatHour(restHour - 4).n}:00 ${formatHour(restHour - 4).a})`
+            }
+          />
+          {!eveningUnlocked && (
+            <button
+              type="button"
+              className="early-reflect-btn"
+              onClick={() => setForceEvening(true)}
+            >
+              Reflect earlier
+            </button>
+          )}
+          {isSealed && (
+            <div className="seal">
+              Page complete &bull; 1726
+            </div>
+          )}
         </div>
       </div>
 
