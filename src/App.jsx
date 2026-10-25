@@ -545,7 +545,7 @@ export default function App() {
               <p className="scheme-hint">Select the hour of rising, morning meditation, and address to Powerful Goodness</p>
               <div className="strip-wrap">
                 <div className="strip" role="group" aria-label="Hour of rising">
-                  {[3, 4, 5, 6, 7, 8, 9, 10, 11].map((h) => {
+                  {[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((h) => {
                     const o = formatHour(h);
                     const isSel = tempRise === h;
                     return (
